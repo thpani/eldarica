@@ -82,6 +82,7 @@ class GlobalParameters extends Cloneable {
   var printIntermediateClauseSets = false
   var horn = false
   var concurrentC = false
+  var envAbstraction = false
   var global = false
   var disjunctive = false
   var splitClauses = false
@@ -164,6 +165,7 @@ class GlobalParameters extends Cloneable {
     that.printIntermediateClauseSets = this.printIntermediateClauseSets
     that.horn = this.horn
     that.concurrentC = this.concurrentC
+    that.envAbstraction = this.envAbstraction
     that.global = this.global
     that.disjunctive = this.disjunctive
     that.splitClauses = this.splitClauses
@@ -304,6 +306,7 @@ object Main {
 //      case "-upprg" :: rest => format = InputFormat.UppaalRG; arguments(rest)
 //      case "-upprel" :: rest => format = InputFormat.UppaalRelational; arguments(rest)
 //      case "-bip" :: rest =>  format = InputFormat.Bip; arguments(rest)
+      case "-envAbstract" :: rest => envAbstraction = true; arguments(rest)
 
       case "-abstract" :: rest => templateBasedInterpolation = true; arguments(rest)
       case "-abstractPO" :: rest => templateBasedInterpolationPortfolio = true; arguments(rest)
@@ -602,6 +605,10 @@ object Main {
 
       if (prettyPrint)
         lazabs.horn.concurrency.ReaderMain.printClauses(system)
+
+      if (envAbstraction) {
+        throw new NotImplementedError("Environment abstraction not implemented")
+      }
 
       val smallSystem = system.mergeLocalTransitions
 
