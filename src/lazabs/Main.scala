@@ -606,20 +606,26 @@ object Main {
       if (prettyPrint)
         lazabs.horn.concurrency.ReaderMain.printClauses(system)
 
-      val abstractedSystem = if (envAbstraction) system.environmentAbstract else system
-
-      val smallSystem = abstractedSystem.mergeLocalTransitions
+      val smallSystem = system.mergeLocalTransitions
 
       if (prettyPrint) {
         println
         println("After simplification:")
         lazabs.horn.concurrency.ReaderMain.printClauses(smallSystem)
+      }
+
+      val abstractedSystem = if (envAbstraction) smallSystem.environmentAbstract else smallSystem
+
+      if (prettyPrint && envAbstraction) {
+        println
+        println("After environment abstraction:")
+        lazabs.horn.concurrency.ReaderMain.printClauses(abstractedSystem)
         return
       }
 
       val result = try {
         Console.withOut(outStream) {
-          new lazabs.horn.concurrency.VerificationLoop(smallSystem).result
+          new lazabs.horn.concurrency.VerificationLoop(abstractedSystem).result
         }
       } catch {
         case TimeoutException => {
