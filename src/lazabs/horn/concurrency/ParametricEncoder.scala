@@ -31,14 +31,13 @@ package lazabs.horn.concurrency
 
 import ap.parser._
 import ap.types.MonoSortedPredicate
-import ap.util.{Seqs, Combinatorics}
+import ap.util.{Combinatorics, Seqs}
 
 import lazabs.horn.bottomup.HornClauses
 import lazabs.horn.bottomup.HornPredAbs.predArgumentSorts
-import lazabs.horn.abstractions.{VerificationHints, EmptyVerificationHints}
+import lazabs.horn.abstractions.{EmptyVerificationHints, VerificationHints}
 
-import scala.collection.mutable.{LinkedHashSet, HashSet => MHashSet,
-                                 ArrayBuffer, HashMap => MHashMap}
+import scala.collection.mutable.{ArrayBuffer, LinkedHashSet, HashMap => MHashMap, HashSet => MHashSet}
 
 object ParametricEncoder {
 
