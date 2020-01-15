@@ -296,6 +296,38 @@ object ParametricEncoder {
     ////////////////////////////////////////////////////////////////////////////
 
     /**
+     * Produce an environment + counter abstracted system.
+     */
+    def counterAbstract(process:Process) : Process = {
+      process
+    }
+
+    def environmentAbstract : System = {
+      val newProcesses = for ((process, replication) <- processes) yield {
+        replication match {
+          case Singleton => (process, replication)
+          case Infinite => (counterAbstract(process), replication)
+        }
+      }
+
+      val allPreds = processPreds(newProcesses) + HornClauses.FALSE
+
+      val newAssertions =
+        assertions filter {
+          clause => clause.predicates subsetOf allPreds }
+
+      System(newProcesses,
+        globalVarNum,
+        backgroundAxioms,
+        timeSpec,
+        timeInvariants,
+        newAssertions,
+        hints filterPredicates allPreds)
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    /**
      * Produce a smaller equi-safe system my merging transitions that only
      * concern local variables.
      */

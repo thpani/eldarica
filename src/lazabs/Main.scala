@@ -597,7 +597,7 @@ object Main {
           "---------------------------- Reading C/C++ file --------------------------------")
       }
 
-      val system = 
+      val system =
         CCReader(new java.io.BufferedReader (
                    new java.io.FileReader(new java.io.File (fileName))),
                  funcName,
@@ -606,11 +606,9 @@ object Main {
       if (prettyPrint)
         lazabs.horn.concurrency.ReaderMain.printClauses(system)
 
-      if (envAbstraction) {
-        throw new NotImplementedError("Environment abstraction not implemented")
-      }
+      val abstractedSystem = if (envAbstraction) system.environmentAbstract else system
 
-      val smallSystem = system.mergeLocalTransitions
+      val smallSystem = abstractedSystem.mergeLocalTransitions
 
       if (prettyPrint) {
         println
