@@ -625,7 +625,7 @@ object Main {
 
       val result = try {
         Console.withOut(outStream) {
-          new lazabs.horn.concurrency.VerificationLoop(abstractedSystem).result
+          new lazabs.horn.concurrency.VerificationLoop(abstractedSystem, envAbstraction).result
         }
       } catch {
         case TimeoutException => {
