@@ -33,6 +33,8 @@ import ap.parser._
 import ap.types.MonoSortedPredicate
 import ap.util.{Combinatorics, Seqs}
 
+import jdk.jshell.spi.ExecutionControl.NotImplementedException
+
 import lazabs.horn.bottomup.HornClauses
 import lazabs.horn.bottomup.HornPredAbs.predArgumentSorts
 import lazabs.horn.abstractions.{EmptyVerificationHints, VerificationHints}
@@ -297,15 +299,46 @@ object ParametricEncoder {
     /**
      * Produce an environment + counter abstracted system.
      */
-    def counterAbstract(process:Process) : Process = {
-      process
+    def counterAbstract(process: Process, processIndex: Int): Process = {
+      // return pair of function name and location for given predicate name
+      def extractNameAndLoc(name: String) : (String, String) = {
+        import scala.util.matching.Regex
+        val pattern: Regex = "([a-zA-Z]+)([0-9]+)".r
+        pattern.findFirstMatchIn(name) match {
+          case Some(m) => (m.group(1), m.group(2))
+          case None => assert(false, "could not parse predicate name '%s'".format(name)); ("", "")
+        }
+      }
+
+      assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "more than one body predicate")
+
+      for (((clause, synchronization), clauseIndex) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
+        if (synchronization != NoSync) {
+          throw new NotImplementedException("Synchronization not supported in counter abstraction")
+        }
+        val (head_name, head_loc) = extractNameAndLoc(clause.head.pred.name)
+        val (body_name, body_loc) = extractNameAndLoc(clause.bodyPredicates.last.name)
+
+        val predicate = MonoSortedPredicate("envLoop_proc"+processIndex+"_"+clauseIndex+"__"+head_name+"_"+head_loc+"__"+body_name+"_"+body_loc+"__", Seq())
+        val head = IAtom(predicate, Seq())
+
+        // TODO: add global variables for each program location
+
+        // TODO: make head a predicate over global variables
+
+        // TODO: add head_loc++; body_loc--; to clause.constraint
+
+        // TODO: existentially quantify local variables in the clause body
+
+        (Clause(head, List(), clause.constraint), NoSync)
+      }
     }
 
     def environmentAbstract : System = {
-      val newProcesses = for ((process, replication) <- processes) yield {
+      val newProcesses = for (((process, replication), i) <- processes.zipWithIndex) yield {
         replication match {
           case Singleton => (process, replication)
-          case Infinite => (counterAbstract(process), replication)
+          case Infinite => (counterAbstract(process, i), replication)
         }
       }
 
