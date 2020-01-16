@@ -310,20 +310,35 @@ object ParametricEncoder {
         }
       }
 
+      def filterTid(args: Seq[ITerm]) : Seq[ITerm] = {
+        args.filter(_.toString() != "tid");
+        // TODO: use thread ID variable name
+        // TODO: filter all local variables
+      }
+
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "more than one body predicate")
+
+      val locVars = (for (((clause, synchronization), clauseIndex) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
+        val (head_name, head_loc) = extractNameAndLoc(clause.head.pred.name)
+        val (body_name, body_loc) = extractNameAndLoc(clause.bodyPredicates.last.name)
+
+        ("loc_%s%s".format(head_name, head_loc), "loc_%s%s".format(body_name, body_loc))
+      }).flatMap(t => List(t._1, t._2)).distinct.map(t => IConstant(new ap.parser.IExpression.ConstantTerm(t)))
 
       for (((clause, synchronization), clauseIndex) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         if (synchronization != NoSync) {
           throw new NotImplementedException("Synchronization not supported in counter abstraction")
         }
-        val (head_name, head_loc) = extractNameAndLoc(clause.head.pred.name)
-        val (body_name, body_loc) = extractNameAndLoc(clause.bodyPredicates.last.name)
 
-        val predicate = new Predicate("envLoop_proc"+processIndex+"_"+clauseIndex+"__"+head_name+"_"+head_loc+"__"+body_name+"_"+body_loc+"__", clause.head.pred.arity)
-        val head = IAtom(predicate, clause.head.args)
-        val body = IAtom(predicate, clause.body.last.args)
+        val predName = "envLoop_proc"+processIndex
 
-        // TODO: add global variables for each program location
+        val headArgs = filterTid(clause.head.args) ++ locVars
+        val headPredicate = new Predicate(predName, headArgs.size)
+        val head = IAtom(headPredicate, headArgs)
+
+        val bodyArgs = filterTid(clause.body.last.args) ++ locVars
+        val bodyPredicate = new Predicate(predName, bodyArgs.size)
+        val body = IAtom(bodyPredicate, bodyArgs)
 
         // TODO: make head a predicate over global variables
 
