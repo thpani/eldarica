@@ -306,6 +306,19 @@ object ParametricEncoder {
         // TODO: filter all local variables
       }
 
+      def locVarsCounterAbstract(locationVars: Seq[IConstant], from: String, to: String) : Seq[ITerm] = {
+        for (locationVar <- locationVars) yield {
+          if (locationVar.c.name == from) {
+            locationVar.-(IIntLit(1))
+          } else if (locationVar.c.name == to)
+          {
+            (locationVar.+(IIntLit(1)))
+          } else {
+            locationVar
+          }
+        }
+      }
+
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "more than one body predicate")
 
       val locVars = (for (((clause, synchronization), clauseIndex) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
@@ -319,7 +332,7 @@ object ParametricEncoder {
 
         val predName = "envLoop_proc"+processIndex
 
-        val headArgs = filterTid(clause.head.args) ++ locVars
+        val headArgs = filterTid(clause.head.args) ++ locVarsCounterAbstract(locVars, "loc_"+clause.body.last.pred.name, "loc_"+clause.head.pred.name)
         val headPredicate = new Predicate(predName, headArgs.size)
         val head = IAtom(headPredicate, headArgs)
 
@@ -329,12 +342,13 @@ object ParametricEncoder {
 
         // TODO: make head a predicate over global variables
 
-        // TODO: add head_loc++; body_loc--; to clause.constraint
-
         // TODO: existentially quantify local variables in the clause body
+
+        // TODO: add location variables on all transitions (incl singleton threads)
 
         (Clause(head, List(body), clause.constraint), NoSync)
       }
+      // TODO: add init clause
     }
 
     def environmentAbstract : System = {
