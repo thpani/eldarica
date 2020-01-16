@@ -300,16 +300,6 @@ object ParametricEncoder {
      * Produce an environment + counter abstracted system.
      */
     def counterAbstract(process: Process, processIndex: Int): Process = {
-      // return pair of function name and location for given predicate name
-      def extractNameAndLoc(name: String) : (String, String) = {
-        import scala.util.matching.Regex
-        val pattern: Regex = "([a-zA-Z]+)([0-9]+)".r
-        pattern.findFirstMatchIn(name) match {
-          case Some(m) => (m.group(1), m.group(2))
-          case None => assert(false, "could not parse predicate name '%s'".format(name)); ("", "")
-        }
-      }
-
       def filterTid(args: Seq[ITerm]) : Seq[ITerm] = {
         args.filter(_.toString() != "tid");
         // TODO: use thread ID variable name
@@ -319,10 +309,7 @@ object ParametricEncoder {
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "more than one body predicate")
 
       val locVars = (for (((clause, synchronization), clauseIndex) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
-        val (head_name, head_loc) = extractNameAndLoc(clause.head.pred.name)
-        val (body_name, body_loc) = extractNameAndLoc(clause.bodyPredicates.last.name)
-
-        ("loc_%s%s".format(head_name, head_loc), "loc_%s%s".format(body_name, body_loc))
+        ("loc_%s".format(clause.head.pred.name), "loc_%s".format(clause.bodyPredicates.last.name))
       }).flatMap(t => List(t._1, t._2)).distinct.map(t => IConstant(new ap.parser.IExpression.ConstantTerm(t)))
 
       for (((clause, synchronization), clauseIndex) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
