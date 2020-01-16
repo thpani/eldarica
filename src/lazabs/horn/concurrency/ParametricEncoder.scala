@@ -319,8 +319,9 @@ object ParametricEncoder {
         val (head_name, head_loc) = extractNameAndLoc(clause.head.pred.name)
         val (body_name, body_loc) = extractNameAndLoc(clause.bodyPredicates.last.name)
 
-        val predicate = MonoSortedPredicate("envLoop_proc"+processIndex+"_"+clauseIndex+"__"+head_name+"_"+head_loc+"__"+body_name+"_"+body_loc+"__", Seq())
-        val head = IAtom(predicate, Seq())
+        val predicate = new Predicate("envLoop_proc"+processIndex+"_"+clauseIndex+"__"+head_name+"_"+head_loc+"__"+body_name+"_"+body_loc+"__", clause.head.pred.arity)
+        val head = IAtom(predicate, clause.head.args)
+        val body = IAtom(predicate, clause.body.last.args)
 
         // TODO: add global variables for each program location
 
@@ -330,7 +331,7 @@ object ParametricEncoder {
 
         // TODO: existentially quantify local variables in the clause body
 
-        (Clause(head, List(), clause.constraint), NoSync)
+        (Clause(head, List(body), clause.constraint), NoSync)
       }
     }
 
