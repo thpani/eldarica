@@ -296,6 +296,9 @@ object ParametricEncoder {
 
     ////////////////////////////////////////////////////////////////////////////
 
+    def getFuncNameOfClause(predicate : Predicate) : String = {
+      "([a-zA-Z_]+)([0-9_]+)".r.findAllMatchIn(predicate.name).map(_.group(1)).next()
+    }
     /**
      * Produce an environment + counter abstracted system.
      */
@@ -348,13 +351,13 @@ object ParametricEncoder {
 
       // TODO: check that symbolic arg is mutually different among replicated processes
 
-      val funcName = "([a-zA-Z_]+)([a-zA-Z0-9_]+)".r.findAllMatchIn(initClause.head.pred.name).map(_.group(1)).next()
-      val predName = "envLoop_"+funcName
+      val predName = "envLoop_"+getFuncNameOfClause(initClause.head.pred)
 
       val initArgs = filterConstantTermAndLocals(initClause.head.args, constantTermIndex) ++ populateLocationCounters(locVars, "loc_"+initClause.head.pred.name, constantTerm)
       val initPredicate = new Predicate(predName, initArgs.size)
       val init = IAtom(initPredicate, initArgs)
 
+      (Clause(init, List(), IBoolLit(true)), NoSync) +:
       (for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         if (synchronization != NoSync) {
           throw new NotImplementedException("Synchronization not supported in counter abstraction")
@@ -371,16 +374,32 @@ object ParametricEncoder {
         // TODO: add location variables on all transitions (incl singleton threads)
 
         (Clause(head, List(body), clause.constraint), NoSync)
-      }) :+ (Clause(init, List(), IBoolLit(true)), NoSync)
+      })
     }
 
     def environmentAbstract : System = {
-      val newProcesses = for ((process, replication) <- processes) yield {
+      def processByName(name: String) : (Process, Replication) = {
+        val procs = processes.filter(p => name == getFuncNameOfClause(p._1.last._1.head.pred))
+        assert(procs.size == 1, "number of procs with name '%s' is %d".format(name, procs.size))
+        procs.last
+      }
+
+      val envAbstractedProcesses = for ((process, replication) <- processes) yield {
         replication match {
           case Singleton => (process, replication)
           case Infinite => (counterAbstract(process), replication)
         }
       }
+      val addSingletonProcs = (for (clause <- assertions) yield {
+        assert(clause.bodyPredicates.size == 1)
+        val funcName = getFuncNameOfClause(clause.bodyPredicates.head)
+        val processAndReplication = processByName(funcName)
+        processAndReplication match {
+          case (process, Infinite) => Some(process, Singleton)
+          case _ => None
+        }
+      }).flatten
+      val newProcesses = envAbstractedProcesses ++ addSingletonProcs
 
       val allPreds = processPreds(newProcesses) + HornClauses.FALSE
 
