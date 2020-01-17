@@ -300,10 +300,23 @@ object ParametricEncoder {
      * Produce an environment + counter abstracted system.
      */
     def counterAbstract(process: Process, processIndex: Int): Process = {
-      def filterTid(args: Seq[ITerm]) : Seq[ITerm] = {
-        args.filter(_.toString() != "tid");
-        // TODO: use thread ID variable name
-        // TODO: filter all local variables
+      // Assumes `args' contains a single symbolic constant.
+      // Returns this constant term and its index in `args'.
+      def getSingleSymbolicArg(args: Seq[ITerm]) : (IConstant, Int) = {
+        val symbolicConstants = args.filter(_.isInstanceOf[IConstant])
+        assert(symbolicConstants.size == 1, "more than one symbolic constant")
+        (symbolicConstants.last.asInstanceOf[IConstant], args.indexOf(symbolicConstants.last))
+      }
+
+      def filterConstantTermAndLocals(args: Seq[ITerm], constantTermIndex: Int) : Seq[ITerm] = {
+        if (args.size > constantTermIndex + 1) {
+          throw new NotImplementedError("projection of local variables")
+        }
+        args.slice(0, constantTermIndex)
+      }
+
+      def populateLocationCounters(args: Seq[ITerm], initLoc: String, constantTerm: IConstant) : Seq[ITerm] = {
+        args.map(t => if (t.toString() == initLoc) constantTerm else IIntLit(0))
       }
 
       def locVarsCounterAbstract(locationVars: Seq[IConstant], from: String, to: String) : Seq[ITerm] = {
@@ -319,24 +332,37 @@ object ParametricEncoder {
         }
       }
 
+      assert(process.filter(_._1.bodyPredicates.size == 0).size == 1, "more than one init predicate")
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "more than one body predicate")
 
-      val locVars = (for (((clause, synchronization), clauseIndex) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
+      val predName = "envLoop_proc"+processIndex
+
+      val locVars = (for (((clause, _), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         ("loc_%s".format(clause.head.pred.name), "loc_%s".format(clause.bodyPredicates.last.name))
       }).flatMap(t => List(t._1, t._2)).distinct.map(t => IConstant(new ap.parser.IExpression.ConstantTerm(t)))
 
-      for (((clause, synchronization), clauseIndex) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
+      val initClause = process.filter(_._1.bodyPredicates.size == 0).last._1
+
+      // Obtain the constant term referring to the number of threads + the constant term's index.
+      // Any argument after that index is a local variable.
+      val (constantTerm, constantTermIndex) = getSingleSymbolicArg(initClause.head.args)
+
+      // TODO: check that symbolic arg is mutually different among replicated processes
+
+      val initArgs = filterConstantTermAndLocals(initClause.head.args, constantTermIndex) ++ populateLocationCounters(locVars, "loc_"+initClause.head.pred.name, constantTerm)
+      val initPredicate = new Predicate(predName, initArgs.size)
+      val init = IAtom(initPredicate, initArgs)
+
+      (for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         if (synchronization != NoSync) {
           throw new NotImplementedException("Synchronization not supported in counter abstraction")
         }
 
-        val predName = "envLoop_proc"+processIndex
-
-        val headArgs = filterTid(clause.head.args) ++ locVarsCounterAbstract(locVars, "loc_"+clause.body.last.pred.name, "loc_"+clause.head.pred.name)
+        val headArgs = filterConstantTermAndLocals(clause.head.args, constantTermIndex) ++ locVarsCounterAbstract(locVars, "loc_"+clause.body.last.pred.name, "loc_"+clause.head.pred.name)
         val headPredicate = new Predicate(predName, headArgs.size)
         val head = IAtom(headPredicate, headArgs)
 
-        val bodyArgs = filterTid(clause.body.last.args) ++ locVars
+        val bodyArgs = filterConstantTermAndLocals(clause.body.last.args, constantTermIndex) ++ locVars
         val bodyPredicate = new Predicate(predName, bodyArgs.size)
         val body = IAtom(bodyPredicate, bodyArgs)
 
