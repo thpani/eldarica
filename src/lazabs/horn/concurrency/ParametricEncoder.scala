@@ -335,8 +335,6 @@ object ParametricEncoder {
       assert(process.filter(_._1.bodyPredicates.size == 0).size == 1, "more than one init predicate")
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "more than one body predicate")
 
-      val predName = "envLoop_proc"+processIndex
-
       val locVars = (for (((clause, _), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         ("loc_%s".format(clause.head.pred.name), "loc_%s".format(clause.bodyPredicates.last.name))
       }).flatMap(t => List(t._1, t._2)).distinct.map(t => IConstant(new ap.parser.IExpression.ConstantTerm(t)))
@@ -348,6 +346,9 @@ object ParametricEncoder {
       val (constantTerm, constantTermIndex) = getSingleSymbolicArg(initClause.head.args)
 
       // TODO: check that symbolic arg is mutually different among replicated processes
+
+      val funcName = "([a-zA-Z_]+)([a-zA-Z0-9_]+)".r.findAllMatchIn(initClause.head.pred.name).map(_.group(1)).next()
+      val predName = "envLoop_"+funcName
 
       val initArgs = filterConstantTermAndLocals(initClause.head.args, constantTermIndex) ++ populateLocationCounters(locVars, "loc_"+initClause.head.pred.name, constantTerm)
       val initPredicate = new Predicate(predName, initArgs.size)
