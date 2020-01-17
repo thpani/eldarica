@@ -387,7 +387,7 @@ object ParametricEncoder {
       val envAbstractedProcesses = for ((process, replication) <- processes) yield {
         replication match {
           case Singleton => (process, replication)
-          case Infinite => (counterAbstract(process), replication)
+          case Infinite => (counterAbstract(process), Singleton)
         }
       }
       val addSingletonProcs = (for (clause <- assertions) yield {
