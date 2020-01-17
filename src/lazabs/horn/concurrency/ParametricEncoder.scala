@@ -299,7 +299,7 @@ object ParametricEncoder {
     /**
      * Produce an environment + counter abstracted system.
      */
-    def counterAbstract(process: Process, processIndex: Int): Process = {
+    def counterAbstract(process: Process): Process = {
       // Assumes `args' contains a single symbolic constant.
       // Returns this constant term and its index in `args'.
       def getSingleSymbolicArg(args: Seq[ITerm]) : (IConstant, Int) = {
@@ -311,6 +311,7 @@ object ParametricEncoder {
       def filterConstantTermAndLocals(args: Seq[ITerm], constantTermIndex: Int) : Seq[ITerm] = {
         if (args.size > constantTermIndex + 1) {
           throw new NotImplementedError("projection of local variables")
+          // TODO: existentially quantify local variables in the clause body
         }
         args.slice(0, constantTermIndex)
       }
@@ -367,10 +368,6 @@ object ParametricEncoder {
         val bodyPredicate = new Predicate(predName, bodyArgs.size)
         val body = IAtom(bodyPredicate, bodyArgs)
 
-        // TODO: make head a predicate over global variables
-
-        // TODO: existentially quantify local variables in the clause body
-
         // TODO: add location variables on all transitions (incl singleton threads)
 
         (Clause(head, List(body), clause.constraint), NoSync)
@@ -378,10 +375,10 @@ object ParametricEncoder {
     }
 
     def environmentAbstract : System = {
-      val newProcesses = for (((process, replication), i) <- processes.zipWithIndex) yield {
+      val newProcesses = for ((process, replication) <- processes) yield {
         replication match {
           case Singleton => (process, replication)
-          case Infinite => (counterAbstract(process, i), replication)
+          case Infinite => (counterAbstract(process), replication)
         }
       }
 
