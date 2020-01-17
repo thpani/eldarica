@@ -373,8 +373,7 @@ object ParametricEncoder {
         // TODO: add location variables on all transitions (incl singleton threads)
 
         (Clause(head, List(body), clause.constraint), NoSync)
-      }
-      // TODO: add init clause
+      }) :+ (Clause(init, List(), IBoolLit(true)), NoSync)
     }
 
     def environmentAbstract : System = {
