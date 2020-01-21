@@ -302,7 +302,7 @@ object ParametricEncoder {
     /**
      * Produce an environment + counter abstracted process.
      */
-    def counterAbstract(process: Process): Process = {
+    def counterAbstract(process: Process): (Process, IConstant) = {
       // Assumes `args' contains a single symbolic constant.
       // Returns this constant term and its index in `args'.
       def getSingleSymbolicArg(args: Seq[ITerm]) : (IConstant, Int) = {
@@ -316,7 +316,7 @@ object ParametricEncoder {
           throw new NotImplementedError("projection of local variables")
           // TODO: existentially quantify local variables in the clause body
         }
-        args.slice(0, constantTermIndex)
+        args
       }
 
       def populateLocationCounters(args: Seq[ITerm], initLoc: String, constantTerm: IConstant) : Seq[ITerm] = {
@@ -351,16 +351,14 @@ object ParametricEncoder {
 
       // TODO: check that symbolic arg is mutually different among replicated processes
 
-      // TODO: carry symbolic arg as additional global variable
-
       val predName = "envLoop_"+getFuncNameOfClause(initClause.head.pred)
 
       val initArgs = filterConstantTermAndLocals(initClause.head.args, constantTermIndex) ++ populateLocationCounters(locVars, "loc_"+initClause.head.pred.name, constantTerm)
       val predicate = new Predicate(predName, initArgs.size)
       val init = IAtom(predicate, initArgs)
 
-      (Clause(init, List(), IBoolLit(true)), NoSync) +:
-      (for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
+      val initClauseAndSync = (Clause(init, List(), IBoolLit(true)), NoSync)
+      val bodyClausesAndSync: Seq[(Clause, NoSync.type)] = for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         if (synchronization != NoSync) {
           throw new NotImplementedException("Synchronization not supported in counter abstraction")
         }
@@ -380,24 +378,71 @@ object ParametricEncoder {
         // TODO: add counter guards to clause constraints
 
         // TODO: add N > 0 as guard (at least on paths to assertions)
-      })
+      }
+
+      (bodyClausesAndSync :+ initClauseAndSync, constantTerm)
+    }
+
+    def addConstantTerms(args: Seq[ITerm], envAbstractionConstantTerms: Seq[IConstant]) : Seq[ITerm] = {
+      args.slice(0, globalVarNum) ++ envAbstractionConstantTerms ++ args.drop(globalVarNum)
+    }
+
+    def addAbstractionConstantTerms(process: Process, envAbstractionConstantTerms: Seq[IConstant]) : Process = {
+      val preds = new MHashMap[(String, Int), Predicate]()
+      def getPred(name:String, arity:Int) : Predicate = {
+        preds.getOrElseUpdate((name, arity), new Predicate(name, arity))
+      }
+      val initClause = process.filter(_._1.bodyPredicates.size == 0).head._1
+
+      val initArgs = addConstantTerms(initClause.head.args, envAbstractionConstantTerms)
+      val initPredicate = getPred(initClause.head.pred.name, initArgs.size)
+      val init = IAtom(initPredicate, initArgs)
+
+      val initClauseAndSync = (Clause(init, List(), IBoolLit(true)), NoSync)
+      val bodyClausesAndSync: Seq[(Clause, NoSync.type)] = for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
+        if (synchronization != NoSync) {
+          throw new NotImplementedException("Synchronization not supported in counter abstraction")
+        }
+
+        val headArgs = addConstantTerms(clause.head.args, envAbstractionConstantTerms)
+        val headPredicate = getPred(clause.head.pred.name, headArgs.size)
+        val head = IAtom(headPredicate, headArgs)
+
+        val bodyArgs = addConstantTerms(clause.body.head.args, envAbstractionConstantTerms)
+        val bodyPredicate = getPred(clause.body.head.pred.name, bodyArgs.size)
+        val body = IAtom(bodyPredicate, bodyArgs)
+
+        (Clause(head, List(body), clause.constraint), NoSync)
+      }
+
+      bodyClausesAndSync :+ initClauseAndSync
     }
 
     def environmentAbstract : System = {
+      def getProcessName(process: Process) : String = {
+        val functionNamesOfClauses = process.map(p => getFuncNameOfClause(p._1.head.pred)).distinct
+        assert(functionNamesOfClauses.size == 1, "%d (> 1) function names for process".format(functionNamesOfClauses.size))
+        functionNamesOfClauses.head
+      }
+
       def getProcessByName(name: String) : (Process, Replication) = {
-        val processesWithName = processes.filter(p => name == getFuncNameOfClause(p._1.head._1.head.pred))
+        val processesWithName = processes.filter { case (process, _) => getProcessName(process) == name }
         assert(processesWithName.size == 1, "number of procs with name '%s' is %d".format(name, processesWithName.size))
         processesWithName.head
       }
 
       assert(assertions.filter(_.bodyPredicates.size != 1).size == 0, "process contains != 1 body predicate")
 
-      val singletonProcess = processes.filter(_._2 == Singleton)
-      val infiniteProcess = processes.filter(_._1 == Infinite)
+      val singletonProcesses = processes.filter(_._2 == Singleton).map(_._1)
+      val infiniteProcesses = processes.filter(_._2 == Infinite).map(_._1)
 
       // environment-abstract infinitely replicated processes into a a singleton one
-      val envAbstractedProcesses = for ((process, replication) <- infiniteProcess) yield {
-        (counterAbstract(process), Singleton)
+      val envAbstractionResult = for (process <- infiniteProcesses) yield counterAbstract(process)
+      val envAbstractedProcesses = envAbstractionResult.map(_._1)
+      val envAbstractionConstantTerms = envAbstractionResult.map(_._2)
+
+      val newSingletonProcesses = for (process <- singletonProcesses) yield {
+        addAbstractionConstantTerms(process, envAbstractionConstantTerms)
       }
 
       // keep one process concrete for infinitely replicated processes with assertions
@@ -405,12 +450,12 @@ object ParametricEncoder {
         val funcName = getFuncNameOfClause(clause.bodyPredicates.head)
         val processAndReplication = getProcessByName(funcName)
         processAndReplication match {
-          case (process, Infinite) => Some(process, Singleton)
+          case (process, Infinite) => Some(process)
           case _ => None
         }
       }).flatten
 
-      val newProcesses = singletonProcess ++ envAbstractedProcesses ++ additionalSingletonProcs
+      val newProcesses = (newSingletonProcesses ++ envAbstractedProcesses ++ additionalSingletonProcs).map((_, Singleton))
 
       val allPreds = processPreds(newProcesses) + HornClauses.FALSE
 
@@ -419,7 +464,7 @@ object ParametricEncoder {
           clause => clause.predicates subsetOf allPreds }
 
       System(newProcesses,
-        globalVarNum,
+        globalVarNum + infiniteProcesses.size,
         backgroundAxioms,
         timeSpec,
         timeInvariants,
