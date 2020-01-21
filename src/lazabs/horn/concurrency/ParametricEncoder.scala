@@ -392,11 +392,11 @@ object ParametricEncoder {
 
       assert(assertions.filter(_.bodyPredicates.size != 1).size == 0, "process contains != 1 body predicate")
 
-      val singletonProcs = processes.filter(_._2 == Singleton)
-      val infiniteProcs = processes.filter(_._1 == Infinite)
+      val singletonProcess = processes.filter(_._2 == Singleton)
+      val infiniteProcess = processes.filter(_._1 == Infinite)
 
       // environment-abstract infinitely replicated processes into a a singleton one
-      val envAbstractedProcesses = for ((process, replication) <- infiniteProcs) yield {
+      val envAbstractedProcesses = for ((process, replication) <- infiniteProcess) yield {
         (counterAbstract(process), Singleton)
       }
 
@@ -410,7 +410,7 @@ object ParametricEncoder {
         }
       }).flatten
 
-      val newProcesses = singletonProcs ++ envAbstractedProcesses ++ additionalSingletonProcs
+      val newProcesses = singletonProcess ++ envAbstractedProcesses ++ additionalSingletonProcs
 
       val allPreds = processPreds(newProcesses) + HornClauses.FALSE
 
