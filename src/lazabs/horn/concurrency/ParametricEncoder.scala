@@ -384,10 +384,10 @@ object ParametricEncoder {
     }
 
     def environmentAbstract : System = {
-      def processByName(name: String) : (Process, Replication) = {
-        val procs = processes.filter(p => name == getFuncNameOfClause(p._1.last._1.head.pred))
-        assert(procs.size == 1, "number of procs with name '%s' is %d".format(name, procs.size))
-        procs.last
+      def getProcessByName(name: String) : (Process, Replication) = {
+        val processesWithName = processes.filter(p => name == getFuncNameOfClause(p._1.head._1.head.pred))
+        assert(processesWithName.size == 1, "number of procs with name '%s' is %d".format(name, processesWithName.size))
+        processesWithName.head
       }
 
       assert(assertions.filter(_.bodyPredicates.size != 1).size == 0, "process contains != 1 body predicate")
@@ -403,7 +403,7 @@ object ParametricEncoder {
       // keep one process concrete for infinitely replicated processes with assertions
       val additionalSingletonProcs = (for (clause <- assertions) yield {
         val funcName = getFuncNameOfClause(clause.bodyPredicates.head)
-        val processAndReplication = processByName(funcName)
+        val processAndReplication = getProcessByName(funcName)
         processAndReplication match {
           case (process, Infinite) => Some(process, Singleton)
           case _ => None
