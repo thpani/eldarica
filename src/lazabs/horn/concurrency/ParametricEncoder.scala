@@ -300,7 +300,7 @@ object ParametricEncoder {
       "([a-zA-Z_]+)([0-9_]+)".r.findAllMatchIn(predicate.name).map(_.group(1)).next()
     }
     /**
-     * Produce an environment + counter abstracted system.
+     * Produce an environment + counter abstracted process.
      */
     def counterAbstract(process: Process): Process = {
       // Assumes `args' contains a single symbolic constant.
