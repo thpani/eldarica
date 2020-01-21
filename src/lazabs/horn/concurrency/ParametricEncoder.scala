@@ -356,8 +356,8 @@ object ParametricEncoder {
       val predName = "envLoop_"+getFuncNameOfClause(initClause.head.pred)
 
       val initArgs = filterConstantTermAndLocals(initClause.head.args, constantTermIndex) ++ populateLocationCounters(locVars, "loc_"+initClause.head.pred.name, constantTerm)
-      val initPredicate = new Predicate(predName, initArgs.size)
-      val init = IAtom(initPredicate, initArgs)
+      val predicate = new Predicate(predName, initArgs.size)
+      val init = IAtom(predicate, initArgs)
 
       (Clause(init, List(), IBoolLit(true)), NoSync) +:
       (for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
@@ -366,12 +366,12 @@ object ParametricEncoder {
         }
 
         val headArgs = filterConstantTermAndLocals(clause.head.args, constantTermIndex) ++ locVarsCounterAbstract(locVars, "loc_"+clause.body.head.pred.name, "loc_"+clause.head.pred.name)
-        val headPredicate = new Predicate(predName, headArgs.size)
-        val head = IAtom(headPredicate, headArgs)
+        assert(headArgs.size == initArgs.size)
+        val head = IAtom(predicate, headArgs)
 
         val bodyArgs = filterConstantTermAndLocals(clause.body.head.args, constantTermIndex) ++ locVars
-        val bodyPredicate = new Predicate(predName, bodyArgs.size)
-        val body = IAtom(bodyPredicate, bodyArgs)
+        assert(bodyArgs.size == initArgs.size)
+        val body = IAtom(predicate, bodyArgs)
 
         // TODO: add location variables on all transitions (incl singleton threads)
 
