@@ -351,6 +351,8 @@ object ParametricEncoder {
 
       // TODO: check that symbolic arg is mutually different among replicated processes
 
+      // TODO: carry symbolic arg as additional global variable
+
       val predName = "envLoop_"+getFuncNameOfClause(initClause.head.pred)
 
       val initArgs = filterConstantTermAndLocals(initClause.head.args, constantTermIndex) ++ populateLocationCounters(locVars, "loc_"+initClause.head.pred.name, constantTerm)
@@ -374,6 +376,10 @@ object ParametricEncoder {
         // TODO: add location variables on all transitions (incl singleton threads)
 
         (Clause(head, List(body), clause.constraint), NoSync)
+
+        // TODO: add counter guards to clause constraints
+
+        // TODO: add N > 0 as guard (at least on paths to assertions)
       })
     }
 
