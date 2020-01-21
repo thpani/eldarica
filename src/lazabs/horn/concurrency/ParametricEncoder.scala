@@ -308,7 +308,7 @@ object ParametricEncoder {
       def getSingleSymbolicArg(args: Seq[ITerm]) : (IConstant, Int) = {
         val symbolicConstants = args.filter(_.isInstanceOf[IConstant])
         assert(symbolicConstants.size == 1, "more than one symbolic constant")
-        (symbolicConstants.last.asInstanceOf[IConstant], args.indexOf(symbolicConstants.last))
+        (symbolicConstants.head.asInstanceOf[IConstant], args.indexOf(symbolicConstants.head))
       }
 
       def filterConstantTermAndLocals(args: Seq[ITerm], constantTermIndex: Int) : Seq[ITerm] = {
@@ -340,10 +340,10 @@ object ParametricEncoder {
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "more than one body predicate")
 
       val locVars = (for (((clause, _), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
-        ("loc_%s".format(clause.head.pred.name), "loc_%s".format(clause.bodyPredicates.last.name))
+        ("loc_%s".format(clause.head.pred.name), "loc_%s".format(clause.bodyPredicates.head.name))
       }).flatMap(t => List(t._1, t._2)).distinct.map(t => IConstant(new ap.parser.IExpression.ConstantTerm(t)))
 
-      val initClause = process.filter(_._1.bodyPredicates.size == 0).last._1
+      val initClause = process.filter(_._1.bodyPredicates.size == 0).head._1
 
       // Obtain the constant term referring to the number of threads + the constant term's index.
       // Any argument after that index is a local variable.
@@ -365,11 +365,11 @@ object ParametricEncoder {
           throw new NotImplementedException("Synchronization not supported in counter abstraction")
         }
 
-        val headArgs = filterConstantTermAndLocals(clause.head.args, constantTermIndex) ++ locVarsCounterAbstract(locVars, "loc_"+clause.body.last.pred.name, "loc_"+clause.head.pred.name)
+        val headArgs = filterConstantTermAndLocals(clause.head.args, constantTermIndex) ++ locVarsCounterAbstract(locVars, "loc_"+clause.body.head.pred.name, "loc_"+clause.head.pred.name)
         val headPredicate = new Predicate(predName, headArgs.size)
         val head = IAtom(headPredicate, headArgs)
 
-        val bodyArgs = filterConstantTermAndLocals(clause.body.last.args, constantTermIndex) ++ locVars
+        val bodyArgs = filterConstantTermAndLocals(clause.body.head.args, constantTermIndex) ++ locVars
         val bodyPredicate = new Predicate(predName, bodyArgs.size)
         val body = IAtom(bodyPredicate, bodyArgs)
 
