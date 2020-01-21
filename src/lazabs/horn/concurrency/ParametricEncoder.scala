@@ -452,7 +452,7 @@ object ParametricEncoder {
           case (process, Infinite) => Some(process)
           case _ => None
         }
-      }).flatten
+      }).flatten.distinct  // only consider each process with an assertion once
 
       // TODO: add location variables on all transitions (incl singleton threads)
 
