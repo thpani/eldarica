@@ -360,7 +360,7 @@ object ParametricEncoder {
       val predicate = new Predicate(predName, initArgs.size)
       val init = IAtom(predicate, initArgs)
 
-      val initClauseAndSync = (Clause(init, List(), IBoolLit(true)), NoSync)
+      val initClauseAndSync = (Clause(init, List(), constantTerm > 0), NoSync)
       val bodyClausesAndSync: Seq[(Clause, NoSync.type)] = for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         if (synchronization != NoSync) {
           throw new NotImplementedException("Synchronization not supported in counter abstraction")
@@ -396,8 +396,9 @@ object ParametricEncoder {
       val initArgs = addConstantTerms(initClause.head.args, envAbstractionConstantTerms)
       val initPredicate = getPred(initClause.head.pred.name, initArgs.size)
       val init = IAtom(initPredicate, initArgs)
+      val constraint = envAbstractionConstantTerms.foldLeft(IExpression.i(true))((a, b) => a &&& (b > 0))
 
-      val initClauseAndSync = (Clause(init, List(), IBoolLit(true)), NoSync)
+      val initClauseAndSync = (Clause(init, List(), constraint), NoSync)
       val bodyClausesAndSync: Seq[(Clause, NoSync.type)] = for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         if (synchronization != NoSync) {
           throw new NotImplementedException("Synchronization not supported in counter abstraction")
@@ -449,14 +450,12 @@ object ParametricEncoder {
         val funcName = getFuncNameOfClause(clause.bodyPredicates.head)
         val processAndReplication = getProcessByName(funcName)
         processAndReplication match {
-          case (process, Infinite) => Some(process)
+          case (process, Infinite) => Some(process)  // TODO: add N > 0 as guard (at least on paths to assertions)
           case _ => None
         }
       }).flatten.distinct  // only consider each process with an assertion once
 
       // TODO: add location variables on all transitions (incl singleton threads)
-
-      // TODO: add N > 0 as guard (at least on paths to assertions)
 
       val newProcesses = (newSingletonProcesses ++ envAbstractedProcesses ++ additionalSingletonProcs).map((_, Singleton))
 
