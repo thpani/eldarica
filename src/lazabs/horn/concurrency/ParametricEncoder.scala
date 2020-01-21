@@ -342,6 +342,9 @@ object ParametricEncoder {
       val locVars = (for (((clause, _), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
         ("loc_%s".format(clause.head.pred.name), "loc_%s".format(clause.bodyPredicates.head.name))
       }).flatMap(t => List(t._1, t._2)).distinct.map(t => IConstant(new ap.parser.IExpression.ConstantTerm(t)))
+      def locVarByName(name: String) : IConstant = {
+        locVars.filter(_.c.name == name).head
+      }
 
       val initClause = process.filter(_._1.bodyPredicates.size == 0).head._1
 
@@ -371,13 +374,9 @@ object ParametricEncoder {
         assert(bodyArgs.size == initArgs.size)
         val body = IAtom(predicate, bodyArgs)
 
-        // TODO: add location variables on all transitions (incl singleton threads)
+        val constraint = clause.constraint & (locVarByName("loc_"+clause.body.head.pred.name) > 0)
 
-        (Clause(head, List(body), clause.constraint), NoSync)
-
-        // TODO: add counter guards to clause constraints
-
-        // TODO: add N > 0 as guard (at least on paths to assertions)
+        (Clause(head, List(body), constraint), NoSync)
       }
 
       (bodyClausesAndSync :+ initClauseAndSync, constantTerm)
@@ -454,6 +453,10 @@ object ParametricEncoder {
           case _ => None
         }
       }).flatten
+
+      // TODO: add location variables on all transitions (incl singleton threads)
+
+      // TODO: add N > 0 as guard (at least on paths to assertions)
 
       val newProcesses = (newSingletonProcesses ++ envAbstractedProcesses ++ additionalSingletonProcs).map((_, Singleton))
 
