@@ -155,7 +155,7 @@ object VerificationLoop {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class VerificationLoop(system : ParametricEncoder.System, envAbstraction: Boolean) {
+class VerificationLoop(system : ParametricEncoder.System, envAbstraction: Boolean = false) {
 
   import VerificationLoop._
   import ParametricEncoder._
