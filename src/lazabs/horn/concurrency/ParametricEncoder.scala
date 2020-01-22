@@ -374,7 +374,7 @@ object ParametricEncoder {
         assert(bodyArgs.size == initArgs.size)
         val body = IAtom(predicate, bodyArgs)
 
-        val constraint = clause.constraint & (locVarByName("loc_"+clause.body.head.pred.name) > 0)
+        val constraint = clause.constraint &&& (locVarByName("loc_"+clause.body.head.pred.name) > 0)
 
         (Clause(head, List(body), constraint), NoSync)
       }
