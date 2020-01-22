@@ -620,8 +620,8 @@ object Main {
         println
         println("After environment abstraction:")
         lazabs.horn.concurrency.ReaderMain.printClauses(abstractedSystem)
-        return
       }
+      if (prettyPrint) return
 
       val result = try {
         Console.withOut(outStream) {
