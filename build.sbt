@@ -108,6 +108,7 @@ lazy val root = (project in file(".")).
 //
     settings(
       scalaSource in Compile := baseDirectory.value / "src",
+      scalaSource in Test := baseDirectory.value / "test",
 //
       mainClass in Compile := Some("lazabs.Main"),
 //
@@ -136,6 +137,8 @@ lazy val root = (project in file(".")).
 //
     libraryDependencies +=
       "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.5",
+//
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test",
 //
     resolvers += "uuverifiers" at "http://logicrunch.research.it.uu.se/maven/",
     libraryDependencies += "uuverifiers" %% "princess" % "2019-11-20"
