@@ -110,6 +110,8 @@ lazy val root = (project in file(".")).
       scalaSource in Compile := baseDirectory.value / "src",
       scalaSource in Test := baseDirectory.value / "test",
 //
+      test in assembly := {},
+//
       mainClass in Compile := Some("lazabs.Main"),
 //
       unmanagedJars in Compile ++= (baseDirectory map { base =>
