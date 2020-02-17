@@ -601,7 +601,7 @@ object Main {
         CCReader(new java.io.BufferedReader (
                    new java.io.FileReader(new java.io.File (fileName))),
                  funcName,
-                 arithmeticMode)
+                 arithmeticMode, envAbstraction)
 
       if (prettyPrint)
         lazabs.horn.concurrency.ReaderMain.printClauses(system)

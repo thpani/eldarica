@@ -48,8 +48,8 @@ import scala.collection.mutable.{HashMap => MHashMap, ArrayBuffer, Buffer,
 object CCReader {
 
   def apply(input : java.io.Reader, entryFunction : String,
-            arithMode : ArithmeticMode.Value = ArithmeticMode.Mathematical)
-           : ParametricEncoder.System = {
+            arithMode : ArithmeticMode.Value = ArithmeticMode.Mathematical,
+            envAbstraction : Boolean = false) : ParametricEncoder.System = {
     def entry(parser : concurrentC.parser) = parser.pProgram
     val prog = parseWithEntry(input, entry _)
 //    println(printer print prog)
@@ -58,7 +58,7 @@ object CCReader {
     var reader : CCReader = null
     while (reader == null)
       try {
-        reader = new CCReader(prog, entryFunction, useTime, arithMode)
+        reader = new CCReader(prog, entryFunction, useTime, arithMode, envAbstraction)
       } catch {
         case NeedsTimeException => {
           warn("enabling time")
@@ -187,7 +187,8 @@ object CCReader {
 class CCReader private (prog : Program,
                         entryFunction : String,
                         useTime : Boolean,
-                        arithmeticMode : CCReader.ArithmeticMode.Value) {
+                        arithmeticMode : CCReader.ArithmeticMode.Value,
+                        envAbstraction : Boolean) {
 
   import CCReader._
 
@@ -570,6 +571,24 @@ class CCReader private (prog : Program,
 
     for (decl <- prog.asInstanceOf[Progr].listexternal_declaration_)
       decl match {
+        case decl: Athread =>
+          decl.thread_def_ match {
+            case thread: ParaThread => {
+              if (envAbstraction) {
+                val c = CCInt newConstant thread.cident_1
+                globalVars += c
+                globalVarTypes += CCInt
+                globalVarsInit += CCTerm(c, CCInt)
+                variableHints += List()
+              }
+            }
+            case _ => // nothing
+          }
+        case _ => // nothing
+      }
+
+    for (decl <- prog.asInstanceOf[Progr].listexternal_declaration_)
+      decl match {
         case decl : Athread =>
           decl.thread_def_ match {
             case thread : SingleThread => {
@@ -582,10 +601,12 @@ class CCReader private (prog : Program,
             case thread : ParaThread => {
               setPrefix(thread.cident_2)
               pushLocalFrame
-              addLocalVar(CCInt newConstant thread.cident_1, CCInt)
+              if (!envAbstraction) {
+                addLocalVar(CCInt newConstant thread.cident_1, CCInt)
+              }
               val translator = FunctionTranslator.apply
               translator translateNoReturn thread.compound_stm_
-              processes += ((clauses.toList, ParametricEncoder.Infinite))
+              processes += ((clauses.toList, new ParametricEncoder.Infinite(thread.cident_1)))
               clauses.clear
               popLocalFrame
             }
