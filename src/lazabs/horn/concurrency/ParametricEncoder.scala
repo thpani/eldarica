@@ -457,7 +457,7 @@ object ParametricEncoder {
 
       // TODO: add location variables on all transitions (incl singleton threads)
 
-      val newProcesses = (newSingletonProcesses ++ envAbstractedProcesses ++ additionalSingletonProcs).map((_, Singleton))
+      val newProcesses = (newSingletonProcesses ++ additionalSingletonProcs ++ envAbstractedProcesses).map((_, Singleton))
 
       val allPreds = processPreds(newProcesses) + HornClauses.FALSE
 
