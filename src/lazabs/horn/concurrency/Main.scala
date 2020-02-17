@@ -101,7 +101,7 @@ object Main extends App {
       List((c === c2) :- (p(1)(id, c), p(1)(id2, c2)))
 
     val system =
-      System(List((pProc, Infinite),
+      System(List((pProc, Infinite("_")),
                   (qProc, Singleton)),
              0, None, NoTime, List(), assertions)
 
@@ -418,7 +418,7 @@ object Main extends App {
                             p(2)(lock, id2, cnt2, t2)))
 
   val system =
-    System(List((counterProcess, Infinite)), 1, None, NoTime, List(), assertions)
+    System(List((counterProcess, Infinite("_"))), 1, None, NoTime, List(), assertions)
 
   new VerificationLoop(system)
 
@@ -525,7 +525,7 @@ object Main extends App {
 
   val system =
     System(
-      List((gateProcess, Singleton), (trainProcess, Infinite)),
+      List((gateProcess, Singleton), (trainProcess, Infinite("_"))),
       4, None,
       ContinuousTime(0, 1),
       timeInvs,
@@ -676,7 +676,7 @@ false :- p(A,D,E,B,C,F),(D > 1).
 
   val system =
     System(
-      List((gateProcess, Singleton), (trainProcess, Infinite)),
+      List((gateProcess, Singleton), (trainProcess, Infinite("_"))),
       1, 
       None,
       DiscreteTime(0),
@@ -723,7 +723,7 @@ false :- p(A,D,E,B,C,F),(D > 1).
   new VerificationLoop(System(
                             List((for (c <- List(c1, c2, c3, c4, c5, c6, c7))
                                     yield (c, NoSync),
-                                  Infinite)),
+                                  Infinite("_"))),
                             3, None,
                             DiscreteTime(0),
                             List(timeInv),
@@ -733,7 +733,7 @@ false :- p(A,D,E,B,C,F),(D > 1).
     new ParametricEncoder(System(
                             List((for (c <- List(c1, c2, c3, c4, c5, c6, c7))
                                     yield (c, NoSync),
-                                  Infinite)),
+                                  Infinite("_"))),
                             3, None,
                             DiscreteTime(0),
                             List(timeInv)),
@@ -782,7 +782,7 @@ false :- p(A,D,E,B,C,F),(D > 1).
   new VerificationLoop(System(
                           List((for (c <- List(c1, c2, c3, c4, c5, c6, c7))
                                   yield (c, NoSync),
-                                Infinite)),
+                                Infinite("_"))),
                           3, None,
                           DiscreteTime(0),
                           List(timeInv),
@@ -793,7 +793,7 @@ false :- p(A,D,E,B,C,F),(D > 1).
   new ParametricEncoder(System(
                           List((for (c <- List(c1, c2, c3, c4, c5, c6, c7))
                                   yield (c, NoSync),
-                                Infinite)),
+                                Infinite(_))),
                           3, None,
                           DiscreteTime(0),
                           List(timeInv)),
@@ -844,7 +844,7 @@ false :- p(A,D,E,B,C,F),(D > 1).
   new VerificationLoop(System(
                           List((for (c <- List(c1, c2, c3, c4, c5, c6, c7))
                                   yield (c, NoSync),
-                                Infinite)),
+                                Infinite("_"))),
                           5, Some({ case Seq(_, _, _, delay1, delay2) =>
                                       delay1 > 0 & delay2 >= delay1 }),
                           DiscreteTime(0),
@@ -856,7 +856,7 @@ false :- p(A,D,E,B,C,F),(D > 1).
   new ParametricEncoder(System(
                           List((for (c <- List(c1, c2, c3, c4, c5, c6, c7))
                                   yield (c, NoSync),
-                                Infinite)),
+                                Infinite(_))),
                           5, Some({ case Seq(_, _, _, delay1, delay2) =>
                                       delay1 > 0 & delay2 >= delay1 }),
                           DiscreteTime(0),
@@ -959,7 +959,7 @@ false :- p(A,D,E,B,C,F),(D > 1).
                              (p2(C, n+1, snt, 1, id) :- p0(C, n, snt, 0, id),     Receive(c)),
                              (p0(C, n-1, 0, rec, id) :- p1(C, n, snt, rec, id),   NoSync),
                              (p0(C, n-1, snt, 0, id) :- p2(C, n, snt, rec, id),   NoSync)),
-                        Infinite)),
+                        Infinite("_"))),
                         4, None,
                         DiscreteTime(0),
                         List(),

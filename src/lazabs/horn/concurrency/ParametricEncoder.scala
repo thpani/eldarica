@@ -47,7 +47,7 @@ object ParametricEncoder {
 
   abstract sealed class Replication
   case object Singleton extends Replication
-  case object Infinite  extends Replication
+  case class Infinite(var processCountSymbol : String) extends Replication
 
   abstract sealed class TimeSpec
   case object NoTime                                           extends TimeSpec
@@ -195,7 +195,7 @@ object ParametricEncoder {
       assert(instanceNumbers.size == processes.size &&
              ((instanceNumbers.iterator zip processes.iterator) forall {
                 case (None, _)                => true
-                case (Some(_), (_, Infinite)) => true
+                case (Some(_), (_, Infinite(_))) => true
                 case _                        => false
               }))
 
@@ -639,7 +639,7 @@ class ParametricEncoder(system : ParametricEncoder.System,
            inv => inv.size == processes.size &&
                   ((processes.iterator zip inv.iterator) forall {
                      case ((_, Singleton), invNum) => 0 <= invNum && invNum <= 1
-                     case ((_, Infinite), invNum)  => 0 <= invNum
+                     case ((_, Infinite(_)), invNum)  => 0 <= invNum
                    })
          })
 

@@ -578,7 +578,7 @@ class VerificationLoop(system : ParametricEncoder.System, envAbstraction: Boolea
               val processIndex = system.localPredsSet indexWhere (_ contains pred)
               system.processes(processIndex) match {
                 case (_, Singleton) => (processIndex, 0)
-                case (_, Infinite)  => (processIndex, args(system.globalVarNum))
+                case (_, Infinite(_))  => (processIndex, args(system.globalVarNum))
               }
              }).toSet
 
@@ -593,7 +593,7 @@ class VerificationLoop(system : ParametricEncoder.System, envAbstraction: Boolea
               print("Process index: " + process)
               system.processes(process) match {
                 case (_, Singleton) => println
-                case (_, Infinite)  => println(", id: " + id)
+                case (_, Infinite(_))  => println(", id: " + id)
               }
             }
           } else {

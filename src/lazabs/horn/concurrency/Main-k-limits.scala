@@ -68,7 +68,7 @@ object MainLimits extends App {
                    l(1)(sem, id4)))
 
   val system =
-    System(List((proc, Infinite)), 1, None, NoTime, List(), assertions)
+    System(List((proc, Infinite("_"))), 1, None, NoTime, List(), assertions)
 
   new VerificationLoop(system)
 

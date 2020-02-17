@@ -141,7 +141,7 @@ object MainGPU extends App {
     )
 
   val system =
-    System(List((kernel, Infinite)), 2, None, NoTime, List(), assertions)
+    System(List((kernel, Infinite("_"))), 2, None, NoTime, List(), assertions)
 
   new VerificationLoop(system)
   }

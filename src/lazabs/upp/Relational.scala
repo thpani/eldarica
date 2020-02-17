@@ -146,7 +146,7 @@ object Relational {
          ( transform(init(uppaal,aut)), ParametricEncoder.NoSync) +: (communicationCls ++ localCls)
       ,
          (if(aut.localIntVars.contains("upp_" + aut.name + "_id")) 
-           ParametricEncoder.Infinite else 
+           ParametricEncoder.Infinite("upp_" + aut.name + "_id") else
              ParametricEncoder.Singleton)
       )
       

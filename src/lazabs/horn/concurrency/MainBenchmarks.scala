@@ -117,7 +117,7 @@ object MainBenchmarks extends App {
     val system = System(
                             List((for (c <- List(c1, c2, c3, c4, c5, c6, c7)) // p
                                     yield (c, NoSync),
-                                  Infinite)
+                                  Infinite("_"))
                                   ,(for (o <- List(o1, o2))
                                     yield (o, NoSync),
                                   Singleton)
@@ -245,7 +245,7 @@ object MainBenchmarks extends App {
     val system =
     System(
       List(
-           (senderProcess, Infinite), 
+           (senderProcess, Infinite("_")),
            (busProcess, Singleton)
           ),
       4, None, ContinuousTime(0, 1), timeInvs, assertions)
@@ -369,7 +369,7 @@ object MainBenchmarks extends App {
 
     val system =
     System(
-      List((nodeProcess, Infinite)),
+      List((nodeProcess, Infinite("_"))),
       4, None, DiscreteTime(0), timeInvs, assertions)
 
     if (ttaFlag)
@@ -457,7 +457,7 @@ object MainBenchmarks extends App {
     val system = System(
                             List((for (c <- List(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13)) // p
                                     yield (c, NoSync),
-                                  Infinite)
+                                  Infinite("_"))
 
                                 ), 
                             4, None,
@@ -552,7 +552,7 @@ object MainBenchmarks extends App {
     val system = System(
                             List((for (c <- List(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13)) // p
                                     yield (c, NoSync),
-                                  Infinite)
+                                  Infinite("_"))
                                   ,(for (o <- List(o1, o2))
                                     yield (o, NoSync),
                                   Singleton)
@@ -665,7 +665,7 @@ object MainBenchmarks extends App {
                    train(0)(C, U, e, ticket, id2, my_ticket2, x2)))
     val system =
       System(
-        List((gateProcess, Singleton), (trainProcess, Infinite)),
+        List((gateProcess, Singleton), (trainProcess, Infinite("_"))),
         4, None,
         ContinuousTime(0, 1),
         timeInvs, assertions)
@@ -935,7 +935,7 @@ object MainBenchmarks extends App {
 //             false :- node(4)(C, U, lock, N, chan, sender, origin, id, slot, c)
     )
 
-    val system = System(List((nodeProcess, Infinite)),
+    val system = System(List((nodeProcess, Infinite("_"))),
                         7, None, DiscreteTime(0), timeInvs, assertions)
 
     if (tta2Flag)
@@ -1136,7 +1136,7 @@ object MainBenchmarks extends App {
                        node(4)(C, U, lock, N, chan, sender, origin, id2, slotn, cn)) */
     )
 
-    val system = System(List((nodeProcess, Infinite)),
+    val system = System(List((nodeProcess, Infinite("_"))),
                         7, None, DiscreteTime(0), timeInvs, assertions)
 
     if (tta3Flag)

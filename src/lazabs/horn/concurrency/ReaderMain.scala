@@ -42,7 +42,7 @@ object ReaderMain {
       r match {
         case ParametricEncoder.Singleton =>
           println("  Singleton thread:")
-        case ParametricEncoder.Infinite =>
+        case ParametricEncoder.Infinite(_) =>
           println("  Replicated thread:")
       }
       for ((c, sync) <- p) {

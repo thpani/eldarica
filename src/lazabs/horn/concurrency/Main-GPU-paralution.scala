@@ -188,7 +188,7 @@ __global const ValueType *in,
   )
 
   val system =
-    System(List((kernel, Infinite)), 7, None, NoTime, List(), assertions)
+    System(List((kernel, Infinite("_"))), 7, None, NoTime, List(), assertions)
 
   new VerificationLoop(system)
   }
