@@ -466,7 +466,7 @@ object ParametricEncoder {
           clause => clause.predicates subsetOf allPreds }
 
       System(newProcesses,
-        globalVarNum + infiniteProcesses.size,
+        globalVarNum,
         backgroundAxioms,
         timeSpec,
         timeInvariants,
