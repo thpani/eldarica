@@ -421,17 +421,25 @@ object ParametricEncoder {
       initClauseAndSync +: bodyClausesAndSync
     }
 
-    def translateInfiniteToSingleton(process: Process, processCountSymbols: Seq[String]): Process = {
-      assert(process.filter(_._1.bodyPredicates.size == 0).size == 1, "!=1 init clauses")
+    /**
+     * Translate infinitely replicated thread into singleton, adding a constraint on parameters at the init clause.
+     * @param process The process to extend (usually infinitely replicated).
+     * @param parameterNames All constant names of process count parameters.
+     * @return The extended process.
+     */
+    def translateInfiniteToSingleton(process: Process, parameterNames: Seq[String]): Process = {
+      assert(process.filter(_._1.bodyPredicates.size == 0).size == 1, "more than one init predicate")
+      assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "clauses with more than one body predicate")
+      assert(process.filter(_._1.bodyPredicates.size == 1).size + 1 == process.size, "init + nonInit clauses != all clauses")
+      assert(process.filter(_._2 != NoSync).size == 0, "clauses with sync != NoSync")
+
       val initClause = process.filter(_._1.bodyPredicates.size == 0).head._1
       val nonInitClauses = process.filter(_._1.bodyPredicates.size == 1)
-      assert(process.size == nonInitClauses.size+1, "clauses with >1 body predicate")
 
-      val globalVarsSet = nonInitClauses.map(_._1.body.head.args).distinct
-      assert(globalVarsSet.size == 1)
-      val globalVars = globalVarsSet.head
+      val parameters = parameterNames.map(constByName(_, initClause))
 
-      val newInitClause = (Clause(initClause.head, List(), processCountSymbols.foldLeft(IExpression.i(true))((form, processCountName) => form &&& (constByName(processCountName, initClause) > 0))), NoSync)
+      val constraint = parameters.foldLeft(IExpression.i(true))((formula, parameter) => formula &&& (parameter > 0))
+      val newInitClause = (Clause(initClause.head, List(), constraint), NoSync)
 
       newInitClause +: nonInitClauses
     }
