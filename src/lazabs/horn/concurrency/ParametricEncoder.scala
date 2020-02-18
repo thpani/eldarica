@@ -444,6 +444,10 @@ object ParametricEncoder {
       newInitClause +: nonInitClauses
     }
 
+    /**
+     * Environment + counter abstract {@code this}.
+     * @return The abstracted system.
+     */
     def environmentAbstract : System = {
       def getProcessName(process: Process) : String = {
         val functionNamesOfClauses = process.map(p => getFuncNameOfClause(p._1.head.pred)).distinct
@@ -457,36 +461,32 @@ object ParametricEncoder {
         processesWithName.head
       }
 
-      assert(assertions.filter(_.bodyPredicates.size != 1).size == 0, "process contains != 1 body predicate")
-
       val singletonProcesses = processes.filter(_._2 == Singleton).map(_._1)
       val infiniteProcesses = (for ((process, replication) <- processes) yield {
         replication match {
-          case Infinite(processCountSymbol) => Some((process, processCountSymbol))
+          case Infinite(parameterName) => Some((process, parameterName))
           case _ => None
         }
       }).flatten
-      val processCountSymbols = infiniteProcesses.map(_._2)
+      val parameterNames = infiniteProcesses.map(_._2)
 
-      // environment-abstract infinitely replicated processes into a a singleton one
-      val envAbstractedProcesses = for ((process, processCountSymbol) <- infiniteProcesses) yield counterAbstract(process, processCountSymbol, processCountSymbols)
+      // 1. environment-abstract infinitely replicated processes into a a singleton one
+      val envAbstractedProcesses = for ((process, parameterName) <- infiniteProcesses) yield counterAbstract(process, parameterName, parameterNames)
 
-      // add parameters to singleton processes
+      // 2. add parameters to singleton processes
       val newSingletonProcesses = for (process <- singletonProcesses) yield {
-        addParameters(process, processCountSymbols)
+        addParameters(process, parameterNames)
       }
 
-      // keep one process concrete for infinitely replicated processes with assertions
+      // 3. keep one process concrete for infinitely replicated processes with assertions
       val funcNamesWithAssertions = (for (clause <- assertions) yield getFuncNameOfClause(clause.bodyPredicates.head)).distinct
       val additionalSingletonProcs = (for (funcName <- funcNamesWithAssertions) yield {
         val processAndReplication = getProcessByName(funcName)
         processAndReplication match {
-          case (process, Infinite(_)) => Some(translateInfiniteToSingleton(process, processCountSymbols))
+          case (process, Infinite(_)) => Some(translateInfiniteToSingleton(process, parameterNames))
           case _ => None
         }
-      }).flatten // only consider each process with an assertion once
-
-      // TODO: add location variables on all transitions (incl singleton threads)
+      }).flatten
 
       val newProcesses = (newSingletonProcesses ++ additionalSingletonProcs ++ envAbstractedProcesses).map((_, Singleton))
 
