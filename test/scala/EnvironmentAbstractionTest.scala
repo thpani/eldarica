@@ -17,11 +17,17 @@ class EnvironmentAbstractionTest extends FunSuite {
   test("pp.c") {
     checkIsSafe("pp.c")
   }
+  test("mm.c") {
+    checkIsSafe("pp.c")
+  }
   test("ppmm.c") {
     checkIsSafe("ppmm.c")
   }
   test("ppmm_threaded.c") {
     checkIsSafe("ppmm_threaded.c")
+  }
+  test("mmpp.c") {
+    checkIsSafe("ppmm.c")
   }
   test("qw2004.c") {
     checkIsSafe("qw2004.c")
