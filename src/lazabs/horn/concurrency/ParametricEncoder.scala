@@ -317,11 +317,11 @@ object ParametricEncoder {
     /**
      * Apply environment and counter abstraction to {@code process}.
      * @param process The process to abstract (usually infinitely replicated).
-     * @param parameter Constant name of the parameter specifying the number of this process's copies.
-     * @param parameters All constant names of process count parameters.
+     * @param parameterName Constant name of the parameter specifying the number of this process's copies.
+     * @param parameterNames All constant names of process count parameters.
      * @return The abstracted process.
      */
-    def counterAbstract(process: Process, parameter: String, parameters: Seq[String]): Process = {
+    def counterAbstract(process: Process, parameterName: String, parameterNames: Seq[String]): Process = {
       assert(process.filter(_._1.bodyPredicates.size == 0).size == 1, "more than one init predicate")
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "clauses with more than one body predicate")
       assert(process.filter(_._1.bodyPredicates.size == 1).size + 1 == process.size, "init + nonInit clauses != all clauses")
@@ -329,6 +329,8 @@ object ParametricEncoder {
 
       val initClause = process.filter(_._1.bodyPredicates.size == 0).head._1
       val nonInitClauses = process.filter(_._1.bodyPredicates.size == 1).map(_._1)
+
+      val parameters = parameterNames.map(constByName(_, initClause))
 
       val locVars = (for (clause <- nonInitClauses) yield {
         ("loc_%s".format(clause.head.pred.name), "loc_%s".format(clause.bodyPredicates.head.name))
@@ -352,11 +354,11 @@ object ParametricEncoder {
       val predName = "envLoop_"+getFuncNameOfClause(initClause.head.pred)
 
       assert(initClause.head.args.size <= globalVarNum, "not implemented: projection of local variables")
-      val initLocationCounterVals = locVars.map(t => if (t == locVarFor(initClause.head.pred)) constByName(parameter, initClause) else IIntLit(0))
+      val initLocationCounterVals = locVars.map(t => if (t == locVarFor(initClause.head.pred)) constByName(parameterName, initClause) else IIntLit(0))
       val initArgs = initClause.head.args ++ initLocationCounterVals
       val predicate = new Predicate(predName, initArgs.size)
       val initHead = IAtom(predicate, initArgs)
-      val parameterConstraint = parameters.foldLeft(IExpression.i(true))((form, processCountName) => form &&& (constByName(processCountName, initClause) > 0))
+      val parameterConstraint = parameters.foldLeft(IExpression.i(true))((formula, parameter) => formula &&& (parameter > 0))
       val initClauseAndSync = (Clause(initHead, List(), parameterConstraint), NoSync)
 
       val bodyClausesAndSync = for (clause <- nonInitClauses) yield {
