@@ -378,25 +378,35 @@ object ParametricEncoder {
       initClauseAndSync +: bodyClausesAndSync
     }
 
-    def addAbstractionConstantTerms(process: Process, envAbstractionConstantTerms: Seq[String]) : Process = {
+    /**
+     * Add parameters {@code parameterNames} to process {@code process}.
+     * @param process The process to extend (usually a singleton).
+     * @param parameterNames All constant names of process count parameters.
+     * @return The extended process.
+     */
+    def addParameters(process: Process, parameterNames: Seq[String]) : Process = {
+      assert(process.filter(_._1.bodyPredicates.size == 0).size == 1, "more than one init predicate")
+      assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "clauses with more than one body predicate")
+      assert(process.filter(_._1.bodyPredicates.size == 1).size + 1 == process.size, "init + nonInit clauses != all clauses")
+      assert(process.filter(_._2 != NoSync).size == 0, "clauses with sync != NoSync")
+
+      val initClause = process.filter(_._1.bodyPredicates.size == 0).head._1
+      val nonInitClauses = process.filter(_._1.bodyPredicates.size == 1).map(_._1)
+
+      val parameters = parameterNames.map(constByName(_, initClause))
+
       val preds = new MHashMap[(String, Int), Predicate]()
       def getPred(name:String, arity:Int) : Predicate = {
         preds.getOrElseUpdate((name, arity), new Predicate(name, arity))
       }
-      val initClause = process.filter(_._1.bodyPredicates.size == 0).head._1
-      val parameters = envAbstractionConstantTerms.map(constByName(_, initClause))
 
       val initArgs = initClause.head.args ++ parameters
       val initPredicate = getPred(initClause.head.pred.name, initArgs.size)
       val init = IAtom(initPredicate, initArgs)
-      val constraint = parameters.foldLeft(IExpression.i(true))((a, b) => a &&& (b > 0))
-
+      val constraint = parameters.foldLeft(IExpression.i(true))((formula, parameter) => formula &&& (parameter > 0))
       val initClauseAndSync = (Clause(init, List(), constraint), NoSync)
-      val bodyClausesAndSync: Seq[(Clause, NoSync.type)] = for (((clause, synchronization), _) <- process.filter(_._1.bodyPredicates.size == 1).zipWithIndex) yield {
-        if (synchronization != NoSync) {
-          throw new NotImplementedException("Synchronization not supported in counter abstraction")
-        }
 
+      val bodyClausesAndSync = for (clause <- nonInitClauses) yield {
         val headArgs = clause.head.args ++ parameters
         val headPredicate = getPred(clause.head.pred.name, headArgs.size)
         val head = IAtom(headPredicate, headArgs)
@@ -408,7 +418,7 @@ object ParametricEncoder {
         (Clause(head, List(body), clause.constraint), NoSync)
       }
 
-      bodyClausesAndSync :+ initClauseAndSync
+      initClauseAndSync +: bodyClausesAndSync
     }
 
     def translateInfiniteToSingleton(process: Process, processCountSymbols: Seq[String]): Process = {
@@ -453,8 +463,9 @@ object ParametricEncoder {
       // environment-abstract infinitely replicated processes into a a singleton one
       val envAbstractedProcesses = for ((process, processCountSymbol) <- infiniteProcesses) yield counterAbstract(process, processCountSymbol, processCountSymbols)
 
+      // add parameters to singleton processes
       val newSingletonProcesses = for (process <- singletonProcesses) yield {
-        addAbstractionConstantTerms(process, processCountSymbols)
+        addParameters(process, processCountSymbols)
       }
 
       // keep one process concrete for infinitely replicated processes with assertions
