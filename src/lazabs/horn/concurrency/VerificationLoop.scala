@@ -155,7 +155,7 @@ object VerificationLoop {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class VerificationLoop(system : ParametricEncoder.System, envAbstraction: Boolean = false) {
+class VerificationLoop(system : ParametricEncoder.System) {
 
   import VerificationLoop._
   import ParametricEncoder._
@@ -166,7 +166,7 @@ class VerificationLoop(system : ParametricEncoder.System, envAbstraction: Boolea
   val result = {
     val processNum = system.processes.size
     var invariants : Seq[Seq[Int]] =
-      if (envAbstraction) {
+      if (GlobalParameters.get.envAbstraction) {
         List((List tabulate processNum) {_ => 1})
       } else {
       for (i <- 0 until processNum)

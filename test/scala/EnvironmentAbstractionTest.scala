@@ -6,12 +6,13 @@ import org.scalatest.FunSuite
 
 class EnvironmentAbstractionTest extends FunSuite {
   def checkIsSafe(filename: String) = {
+    GlobalParameters.parameters.value.envAbstraction = true
     val system =
       CCReader(new java.io.BufferedReader (
         new java.io.FileReader(new java.io.File (Paths.get("./", "regression-tests", "environment-abstract", filename).toString))),
         "main", CCReader.ArithmeticMode.Mathematical, true).mergeLocalTransitions.environmentAbstract
 
-    val result = new lazabs.horn.concurrency.VerificationLoop(system, true).result
+    val result = new lazabs.horn.concurrency.VerificationLoop(system).result
     assert(result.isInstanceOf[Left[Unit, Counterexample]])
   }
   test("pp.c") {
