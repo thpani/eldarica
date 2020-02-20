@@ -1,5 +1,7 @@
 import java.nio.file.Paths
 
+import lazabs.GlobalParameters
+import lazabs.horn.abstractions.StaticAbstractionBuilder.AbstractionType
 import lazabs.horn.concurrency.CCReader
 import lazabs.horn.concurrency.VerificationLoop.Counterexample
 import org.scalatest.FunSuite
@@ -7,6 +9,9 @@ import org.scalatest.FunSuite
 class EnvironmentAbstractionTest extends FunSuite {
   def checkIsSafe(filename: String) = {
     GlobalParameters.parameters.value.envAbstraction = true
+    GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Term
+    GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
+
     val system =
       CCReader(new java.io.BufferedReader (
         new java.io.FileReader(new java.io.File (Paths.get("./", "regression-tests", "environment-abstract", filename).toString))),
@@ -32,5 +37,8 @@ class EnvironmentAbstractionTest extends FunSuite {
   }
   test("qw2004.c") {
     checkIsSafe("qw2004.c")
+  }
+  test("ticket_lock.c") {
+    checkIsSafe("ticket_lock.c")
   }
 }
