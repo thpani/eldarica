@@ -614,6 +614,12 @@ object Main {
         lazabs.horn.concurrency.ReaderMain.printClauses(smallSystem)
       }
 
+      if (envAbstraction) {
+        println()
+        println("Overriding template-based interpolation abstraction to 'term' for environment abstraction")
+        println()
+        GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Term
+      }
       val abstractedSystem = if (envAbstraction) smallSystem.environmentAbstract else smallSystem
 
       if (prettyPrint && envAbstraction) {

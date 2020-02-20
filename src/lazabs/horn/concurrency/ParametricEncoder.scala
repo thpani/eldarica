@@ -496,13 +496,38 @@ object ParametricEncoder {
         assertions filter {
           clause => clause.predicates subsetOf allPreds }
 
+      val additionalHints = MHashMap[Predicate, Seq[VerifHintElement]]().withDefaultValue(Seq())
+      for (process <- envAbstractedProcesses) yield {
+        for ((Clause(head, body, _), _) <- process) yield {
+          val globalVarStrides = (for ((arg, i) <- head.args.zipWithIndex if i < globalVarNum) yield {
+            arg match {
+              case IPlus(IConstant(t1), IIntLit(t2)) => Some((IVariable(i), t2))
+              case IPlus(IConstant(t1), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
+              case _ => None
+            }
+          }).flatten
+          val locationStrides = (for ((arg, i) <- head.args.zipWithIndex if i >= globalVarNum) yield {
+            arg match {
+              case IPlus(IConstant(t1), IIntLit(t2)) => Some((IVariable(i), t2))
+              case IPlus(IConstant(t1), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
+              case _ => None
+            }
+          }).flatten
+          for (globalVarStride <- globalVarStrides ; locationStride <- locationStrides) {
+            val hint = VerifHintTplEqTerm((IIntLit(locationStride._2) * globalVarStride._1) - (IIntLit(globalVarStride._2) * locationStride._1), 4)
+            println("additional hint " + head.pred + " " + hint)
+            additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
+          }
+        }
+      }
+
       System(newProcesses,
         globalVarNum,
         backgroundAxioms,
         timeSpec,
         timeInvariants,
         newAssertions,
-        hints filterPredicates allPreds)
+        VerificationHints(additionalHints.toMap).filterPredicates(allPreds))
     }
 
     ////////////////////////////////////////////////////////////////////////////
