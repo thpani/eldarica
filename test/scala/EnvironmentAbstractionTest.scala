@@ -38,6 +38,9 @@ class EnvironmentAbstractionTest extends FunSuite {
   test("stack.c") {
     checkIsSafe("stack.c")
   }
+  test("spin2003.c") {
+    checkIsSafe("spin2003.c")
+  }
   test("qw2004.c") {
     checkIsSafe("qw2004.c")
   }
