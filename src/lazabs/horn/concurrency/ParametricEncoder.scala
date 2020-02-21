@@ -354,7 +354,7 @@ object ParametricEncoder {
       val predName = "envLoop_"+getFuncNameOfClause(initClause.head.pred)
 
       assert(initClause.head.args.size <= globalVarNum, "not implemented: projection of local variables")
-      val initLocationCounterVals = locVars.map(t => if (t == locVarFor(initClause.head.pred)) constByName(parameterName, initClause) else IIntLit(0))
+      val initLocationCounterVals = locVars.map(t => if (t == locVarFor(initClause.head.pred)) constByName(parameterName, initClause)-IIntLit(1) else IIntLit(0))
       val initArgs = initClause.head.args ++ initLocationCounterVals
       val predicate = new Predicate(predName, initArgs.size)
       val initHead = IAtom(predicate, initArgs)
@@ -501,15 +501,15 @@ object ParametricEncoder {
         for ((Clause(head, body, _), _) <- process) yield {
           val globalVarStrides = (for ((arg, i) <- head.args.zipWithIndex if i < globalVarNum) yield {
             arg match {
-              case IPlus(IConstant(t1), IIntLit(t2)) => Some((IVariable(i), t2))
-              case IPlus(IConstant(t1), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
+              case IPlus(IConstant(_), IIntLit(t2)) => Some((IVariable(i), t2))
+              case IPlus(IConstant(_), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
               case _ => None
             }
           }).flatten
           val locationStrides = (for ((arg, i) <- head.args.zipWithIndex if i >= globalVarNum) yield {
             arg match {
-              case IPlus(IConstant(t1), IIntLit(t2)) => Some((IVariable(i), t2))
-              case IPlus(IConstant(t1), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
+              case IPlus(IConstant(_), IIntLit(t2)) => Some((IVariable(i), t2))
+              case IPlus(IConstant(_), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
               case _ => None
             }
           }).flatten

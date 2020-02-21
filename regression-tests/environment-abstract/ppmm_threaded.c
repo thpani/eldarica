@@ -1,13 +1,13 @@
 int X = 0;
 
 thread[N] inc {
-  assert(-M-1 <= X && X <= N);
+  assert(-M <= X && X < N);
   atomic { X++; }
-  assert(-M <= X && X <= N+1);
+  assert(-M < X && X <= N);
 }
 
 thread[M] dec {
-  assert(-M <= X && X <= N+1);
+  assert(-M < X && X <= N);
   atomic { X--; }
-  assert(-M-1 <= X && X <= N);
+  assert(-M <= X && X < N);
 }
