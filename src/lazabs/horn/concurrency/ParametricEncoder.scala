@@ -397,18 +397,18 @@ object ParametricEncoder {
         preds.getOrElseUpdate((name, arity), new Predicate(name, arity))
       }
 
-      val initArgs = initClause.head.args ++ parameters
+      val initArgs = initClause.head.args
       val initPredicate = getPred(initClause.head.pred.name, initArgs.size)
       val init = IAtom(initPredicate, initArgs)
       val constraint = parameters.foldLeft(IExpression.i(true))((formula, parameter) => formula &&& (parameter > 0))
       val initClauseAndSync = (Clause(init, List(), constraint), NoSync)
 
       val bodyClausesAndSync = for (clause <- nonInitClauses) yield {
-        val headArgs = clause.head.args ++ parameters
+        val headArgs = clause.head.args
         val headPredicate = getPred(clause.head.pred.name, headArgs.size)
         val head = IAtom(headPredicate, headArgs)
 
-        val bodyArgs = clause.body.head.args ++ parameters
+        val bodyArgs = clause.body.head.args
         val bodyPredicate = getPred(clause.body.head.pred.name, bodyArgs.size)
         val body = IAtom(bodyPredicate, bodyArgs)
 
