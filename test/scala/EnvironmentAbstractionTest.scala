@@ -50,4 +50,7 @@ class EnvironmentAbstractionTest extends FunSuite {
   test("13_unverif.c") {
     checkIsSafe("13_unverif.c")
   }
+  test("sssc12.c") {
+    checkIsSafe("sssc12.c")
+  }
 }
