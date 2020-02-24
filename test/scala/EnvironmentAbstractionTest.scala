@@ -47,4 +47,7 @@ class EnvironmentAbstractionTest extends FunSuite {
   test("ticket_lock.c") {
     checkIsSafe("ticket_lock.c")
   }
+  test("13_unverif.c") {
+    checkIsSafe("13_unverif.c")
+  }
 }
