@@ -353,21 +353,18 @@ object ParametricEncoder {
 
       val predName = "envLoop_"+getFuncNameOfClause(initClause.head.pred)
 
-      assert(initClause.head.args.size <= globalVarNum, "not implemented: projection of local variables")
       val initLocationCounterVals = locVars.map(t => if (t == locVarFor(initClause.head.pred)) constByName(parameterName, initClause)-IIntLit(1) else IIntLit(0))
-      val initArgs = initClause.head.args ++ initLocationCounterVals
+      val initArgs = initClause.head.args.slice(0, globalVarNum) ++ initLocationCounterVals
       val predicate = new Predicate(predName, initArgs.size)
       val initHead = IAtom(predicate, initArgs)
       val parameterConstraint = parameters.foldLeft(IExpression.i(true))((formula, parameter) => formula &&& (parameter > 0))
       val initClauseAndSync = (Clause(initHead, List(), parameterConstraint), NoSync)
 
       val bodyClausesAndSync = for (clause <- nonInitClauses) yield {
-        assert(clause.head.args.size == globalVarNum, "not implemented: projection of local variables")
-        val headArgs = clause.head.args ++ locVarsCounterAbstract(locVars, clause.body.head.pred, clause.head.pred)
+        val headArgs = clause.head.args.slice(0, globalVarNum) ++ locVarsCounterAbstract(locVars, clause.body.head.pred, clause.head.pred)
         val head = IAtom(predicate, headArgs)
 
-        assert(clause.body.head.args.size == globalVarNum, "not implemented: projection of local variables")
-        val bodyArgs = clause.body.head.args ++ locVars
+        val bodyArgs = clause.body.head.args.slice(0, globalVarNum) ++ locVars
         val body = IAtom(predicate, bodyArgs)
 
         val constraint = clause.constraint &&& (locVarFor(clause.body.head.pred) > 0)
