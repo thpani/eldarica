@@ -7,7 +7,7 @@ import lazabs.horn.concurrency.VerificationLoop.Counterexample
 import org.scalatest.FunSuite
 
 class EnvironmentAbstractionTest extends FunSuite {
-  def checkIsSafe(filename: String) = {
+  def check(filename: String) = {
     GlobalParameters.parameters.value.envAbstraction = true
     GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Term
     GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
@@ -18,7 +18,13 @@ class EnvironmentAbstractionTest extends FunSuite {
         "main", CCReader.ArithmeticMode.Mathematical, true).mergeLocalTransitions.environmentAbstract
 
     val result = new lazabs.horn.concurrency.VerificationLoop(system).result
-    assert(result.isInstanceOf[Left[Unit, Counterexample]])
+    result
+  }
+  def checkIsSafe(filename: String) = {
+    check(filename).isLeft
+  }
+  def checkIsUnsafe(filename: String) = {
+    check(filename).isRight
   }
   test("pp.c") {
     checkIsSafe("pp.c")
@@ -52,5 +58,11 @@ class EnvironmentAbstractionTest extends FunSuite {
   }
   test("sssc12.c") {
     checkIsSafe("sssc12.c")
+  }
+  test("shareds.c") {
+    checkIsSafe("shareds.c")
+  }
+  test("shareds-bug.c") {
+    checkIsUnsafe("shareds-bug.c")
   }
 }
