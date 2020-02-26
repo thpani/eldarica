@@ -319,9 +319,10 @@ object ParametricEncoder {
      * @param process The process to abstract (usually infinitely replicated).
      * @param parameterName Constant name of the parameter specifying the number of this process's copies.
      * @param parameterNames All constant names of process count parameters.
+     * @param funcNamesWithAssertions Function names with assertions. For these, the process counter will initialize to (N-1), otherwise to N.
      * @return The abstracted process.
      */
-    def counterAbstract(process: Process, parameterName: String, parameterNames: Seq[String]): Process = {
+    def counterAbstract(process: Process, parameterName: String, parameterNames: Seq[String], funcNamesWithAssertions: Seq[String]): Process = {
       assert(process.filter(_._1.bodyPredicates.size == 0).size == 1, "more than one init predicate")
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "clauses with more than one body predicate")
       assert(process.filter(_._1.bodyPredicates.size == 1).size + 1 == process.size, "init + nonInit clauses != all clauses")
@@ -352,8 +353,17 @@ object ParametricEncoder {
       }
 
       val predName = "envLoop_"+getFuncNameOfClause(initClause.head.pred)
+      val hasAssertion = funcNamesWithAssertions.contains(getFuncNameOfClause(initClause.head.pred))
 
-      val initLocationCounterVals = locVars.map(t => if (t == locVarFor(initClause.head.pred)) constByName(parameterName, initClause)-IIntLit(1) else IIntLit(0))
+      val initLocationCounterVals = locVars.map(t =>
+        if (t == locVarFor(initClause.head.pred)) {
+          if (hasAssertion) {
+            constByName(parameterName, initClause) - IIntLit(1)
+          } else {
+            constByName(parameterName, initClause)
+          }
+        } else IIntLit(0)
+      )
       val initArgs = initClause.head.args.slice(0, globalVarNum) ++ initLocationCounterVals
       val predicate = new Predicate(predName, initArgs.size)
       val initHead = IAtom(predicate, initArgs)
@@ -468,7 +478,8 @@ object ParametricEncoder {
       val parameterNames = infiniteProcesses.map(_._2)
 
       // 1. environment-abstract infinitely replicated processes into a a singleton one
-      val envAbstractedProcesses = for ((process, parameterName) <- infiniteProcesses) yield counterAbstract(process, parameterName, parameterNames)
+      val funcNamesWithAssertions = (for (clause <- assertions) yield getFuncNameOfClause(clause.bodyPredicates.head)).distinct
+      val envAbstractedProcesses = for ((process, parameterName) <- infiniteProcesses) yield counterAbstract(process, parameterName, parameterNames, funcNamesWithAssertions)
 
       // 2. add parameters to singleton processes
       val newSingletonProcesses = for (process <- singletonProcesses) yield {
@@ -476,7 +487,6 @@ object ParametricEncoder {
       }
 
       // 3. keep one process concrete for infinitely replicated processes with assertions
-      val funcNamesWithAssertions = (for (clause <- assertions) yield getFuncNameOfClause(clause.bodyPredicates.head)).distinct
       val additionalSingletonProcs = (for (funcName <- funcNamesWithAssertions) yield {
         val processAndReplication = getProcessByName(funcName)
         processAndReplication match {
