@@ -575,11 +575,13 @@ class CCReader private (prog : Program,
           decl.thread_def_ match {
             case thread: ParaThread => {
               if (envAbstraction) {
-                val c = CCInt newConstant thread.cident_1
-                globalVars += c
-                globalVarTypes += CCInt
-                globalVarsInit += CCTerm(c, CCInt)
-                variableHints += List()
+                if (globalVars.count(_.name == thread.cident_1) == 0) {
+                  val c = CCInt newConstant thread.cident_1
+                  globalVars += c
+                  globalVarTypes += CCInt
+                  globalVarsInit += CCTerm(c, CCInt)
+                  variableHints += List()
+                }
               }
             }
             case _ => // nothing
