@@ -75,6 +75,7 @@ object Solve {
           }
         }
         if(drawRTree) lazabs.viewer.DrawGraph(arg)
+        None
       } else {
 
         val result = try {
@@ -145,6 +146,7 @@ object Solve {
             }
           }
         }
-      }    
+        Some(result)
+      }
   }
 }
