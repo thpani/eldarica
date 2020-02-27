@@ -3,7 +3,6 @@ import java.nio.file.Paths
 import lazabs.GlobalParameters
 import lazabs.horn.abstractions.StaticAbstractionBuilder.AbstractionType
 import lazabs.horn.concurrency.CCReader
-import lazabs.horn.concurrency.VerificationLoop.Counterexample
 import org.scalatest.FunSuite
 
 class EnvironmentAbstractionTest extends FunSuite {
@@ -21,10 +20,10 @@ class EnvironmentAbstractionTest extends FunSuite {
     result
   }
   def checkIsSafe(filename: String) = {
-    check(filename).isLeft
+    assert(check(filename).isLeft)
   }
   def checkIsUnsafe(filename: String) = {
-    check(filename).isRight
+    assert(check(filename).isRight)
   }
   test("pp.c") {
     checkIsSafe("pp.c")
