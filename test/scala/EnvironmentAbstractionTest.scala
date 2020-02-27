@@ -1,8 +1,12 @@
 import java.nio.file.Paths
 
 import lazabs.GlobalParameters
+import lazabs.GlobalParameters.InputFormat
+import lazabs.Main.{StoppedException, TimeoutException}
 import lazabs.horn.abstractions.StaticAbstractionBuilder.AbstractionType
 import lazabs.horn.concurrency.CCReader
+import lazabs.nts.{NtsHorn, NtsWrapper}
+import lazabs.viewer.{HornPrinter, HornSMTPrinter}
 import org.scalatest.FunSuite
 
 class EnvironmentAbstractionTest extends FunSuite {
@@ -24,6 +28,13 @@ class EnvironmentAbstractionTest extends FunSuite {
   }
   def checkIsUnsafe(filename: String) = {
     assert(check(filename).isRight)
+  }
+  def checkIsSafeSMT(filename: String) = {
+    GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Term
+    GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
+    val clauseSet = lazabs.horn.parser.HornReader.fromSMT(Paths.get("./", "regression-tests", "environment-abstract", filename).toString)
+    val result = lazabs.horn.Solve(clauseSet, None, false, false, false, false)
+    assert(result.get.isLeft)
   }
   test("pp.c") {
     checkIsSafe("pp.c")
@@ -63,5 +74,8 @@ class EnvironmentAbstractionTest extends FunSuite {
   }
   test("shareds-bug.c") {
     checkIsUnsafe("shareds-bug.c")
+  }
+  test("cyclic") {
+    checkIsSafeSMT("cyclic.c-1_1_1.smt2")
   }
 }
