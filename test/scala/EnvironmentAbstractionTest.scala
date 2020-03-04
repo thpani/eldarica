@@ -54,17 +54,23 @@ class EnvironmentAbstractionTest extends FunSuite {
   test("stack.c") {
     checkIsSafe("stack.c")
   }
+  /* Benchmarks from
+   * https://github.com/sosy-lab/sv-benchmarks/tree/master/c/pthread-ext
+   */
   test("spin2003.c") {
     checkIsSafe("spin2003.c")
   }
+  test("13_unverif.c") {
+    checkIsSafe("13_unverif.c")
+  }
+  /* Benchmarks from
+   * https://github.com/sosy-lab/sv-benchmarks/tree/master/c/pthread-lit
+   */
   test("qw2004.c") {
     checkIsSafe("qw2004.c")
   }
   test("fkp2014.c") {
     checkIsSafe("fkp2014.c")
-  }
-  test("13_unverif.c") {
-    checkIsSafe("13_unverif.c")
   }
   test("sssc12.c") {
     checkIsSafe("sssc12.c")
