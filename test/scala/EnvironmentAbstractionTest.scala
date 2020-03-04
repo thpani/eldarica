@@ -69,6 +69,11 @@ class EnvironmentAbstractionTest extends FunSuite {
   test("sssc12.c") {
     checkIsSafe("sssc12.c")
   }
+  /*
+   * Benchmarks from
+   * Ganjei, Rezine, Eles, Peng: Counting dynamically synchronizing processes. STTT 18(5): 517-534 (2016)
+   * Ganjei, Rezine, Eles, Peng: Abstracting and Counting Synchronizing Processes. VMCAI 2015: 227-244, 2012
+   */
   test("locals.c") {
     checkIsSafe("locals.c")
   }
@@ -80,5 +85,8 @@ class EnvironmentAbstractionTest extends FunSuite {
   }
   test("cyclic") {
     checkIsSafeSMT("cyclic.c-1_1_1.smt2")
+  }
+  test("readflag.c") {
+    checkIsSafe("readflag.c")
   }
 }
