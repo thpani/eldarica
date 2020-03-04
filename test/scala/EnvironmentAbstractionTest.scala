@@ -12,7 +12,7 @@ import org.scalatest.FunSuite
 class EnvironmentAbstractionTest extends FunSuite {
   def check(filename: String) = {
     GlobalParameters.parameters.value.envAbstraction = true
-    GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Term
+    GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Empty
     GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
 
     val system =
@@ -30,7 +30,7 @@ class EnvironmentAbstractionTest extends FunSuite {
     assert(check(filename).isRight)
   }
   def checkIsSafeSMT(filename: String) = {
-    GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Term
+    GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Empty
     GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
     val clauseSet = lazabs.horn.parser.HornReader.fromSMT(Paths.get("./", "regression-tests", "environment-abstract", filename).toString)
     val result = lazabs.horn.Solve(clauseSet, None, false, false, false, false)
@@ -68,6 +68,9 @@ class EnvironmentAbstractionTest extends FunSuite {
   }
   test("sssc12.c") {
     checkIsSafe("sssc12.c")
+  }
+  test("locals.c") {
+    checkIsSafe("locals.c")
   }
   test("shareds.c") {
     checkIsSafe("shareds.c")
