@@ -322,7 +322,7 @@ object ParametricEncoder {
      * @param funcNamesWithAssertions Function names with assertions. For these, the process counter will initialize to (N-1), otherwise to N.
      * @return The abstracted process.
      */
-    def counterAbstract(process: Process, parameterName: String, parameterNames: Seq[String], funcNamesWithAssertions: Seq[String]): Process = {
+    def counterAbstract(process: Process, parameterName: String, parameterNames: Seq[String], funcNamesWithAssertions: Seq[String]): (Process, Seq[IConstant]) = {
       assert(process.filter(_._1.bodyPredicates.size == 0).size == 1, "more than one init predicate")
       assert(process.filter(_._1.bodyPredicates.size > 1).size == 0, "clauses with more than one body predicate")
       assert(process.filter(_._1.bodyPredicates.size == 1).size + 1 == process.size, "init + nonInit clauses != all clauses")
@@ -382,7 +382,7 @@ object ParametricEncoder {
         (Clause(head, List(body), constraint), NoSync)
       }
 
-      initClauseAndSync +: bodyClausesAndSync
+      (initClauseAndSync +: bodyClausesAndSync, locVars)
     }
 
     /**
@@ -415,10 +415,12 @@ object ParametricEncoder {
 
       val bodyClausesAndSync = for (clause <- nonInitClauses) yield {
         val headArgs = clause.head.args
+        assert(headArgs.size == initArgs.size)
         val headPredicate = getPred(clause.head.pred.name, headArgs.size)
         val head = IAtom(headPredicate, headArgs)
 
         val bodyArgs = clause.body.head.args
+        assert(bodyArgs.size == initArgs.size)
         val bodyPredicate = getPred(clause.body.head.pred.name, bodyArgs.size)
         val body = IAtom(bodyPredicate, bodyArgs)
 
@@ -479,7 +481,9 @@ object ParametricEncoder {
 
       // 1. environment-abstract infinitely replicated processes into a a singleton one
       val funcNamesWithAssertions = (for (clause <- assertions) yield getFuncNameOfClause(clause.bodyPredicates.head)).distinct
-      val envAbstractedProcesses = for ((process, parameterName) <- infiniteProcesses) yield counterAbstract(process, parameterName, parameterNames, funcNamesWithAssertions)
+      val envAbstractedProcessesAndLocVars = for ((process, parameterName) <- infiniteProcesses) yield counterAbstract(process, parameterName, parameterNames, funcNamesWithAssertions)
+      val envAbstractedProcesses = envAbstractedProcessesAndLocVars.map(_._1)
+      val locVars = envAbstractedProcessesAndLocVars.map(_._2)
 
       // 2. add parameters to singleton processes
       val newSingletonProcesses = for (process <- singletonProcesses) yield {
@@ -504,8 +508,8 @@ object ParametricEncoder {
           clause => clause.predicates subsetOf allPreds }
 
       val additionalHints = MHashMap[Predicate, Seq[VerifHintElement]]().withDefaultValue(Seq())
-      for (process <- envAbstractedProcesses) yield {
-        for ((Clause(head, body, _), _) <- process) yield {
+      for ((process, locVarSum) <- envAbstractedProcessesAndLocVars) yield {
+        for ((Clause(head, _, _), _) <- process) yield {
           val globalVarStrides = (for ((arg, i) <- head.args.zipWithIndex if i < globalVarNum) yield {
             arg match {
               case IPlus(IConstant(_), IIntLit(t2)) => Some((IVariable(i), t2))
@@ -516,16 +520,32 @@ object ParametricEncoder {
           val locationStrides = (for ((arg, i) <- head.args.zipWithIndex if i >= globalVarNum) yield {
             arg match {
               case IPlus(IConstant(_), IIntLit(t2)) => Some((IVariable(i), t2))
-              case IPlus(IConstant(_), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
+//              case IPlus(IConstant(_), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
               case _ => None
             }
           }).flatten
           for (globalVarStride <- globalVarStrides ; locationStride <- locationStrides) {
             val hint = VerifHintTplEqTerm((IIntLit(locationStride._2) * globalVarStride._1) - (IIntLit(globalVarStride._2) * locationStride._1), 4)
-            println("additional hint " + head.pred + " " + hint)
+            println("additional hint (strides): " + head.pred + " " + hint)
             additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
           }
         }
+        for (i <- 0 to (globalVarNum-1)) {
+          val hint = VerifHintTplEqTerm(IVariable(i), 4)
+          val head = process.head._1.head
+          println("additional hint (parameter): " + head.pred + " " + hint)
+          additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
+        }
+        def constByNameIndex(constant: IConstant, clause: Clause) : IVariable = {
+          (for ((arg, i) <- clause.body.head.args.zipWithIndex
+              if arg.isInstanceOf[IConstant] && arg.asInstanceOf[IConstant].c.name == constant.c.name) yield IVariable(i)).head
+        }
+        val bodyClause = process.filter(_._1.bodyPredicates.size > 0).head._1
+        val locVarSumVariables = locVarSum.map(constByNameIndex(_, bodyClause))
+        val hint = VerifHintTplEqTerm(locVarSumVariables.foldLeft(IIntLit(0).asInstanceOf[ITerm])((form, variable) => form +++ variable), 4)
+        val head = process.head._1.head
+        println("additional hint (loc var sum): " + head.pred + " " + hint)
+        additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
       }
 
       System(newProcesses,

@@ -616,9 +616,9 @@ object Main {
 
       if (envAbstraction) {
         println()
-        println("Overriding template-based interpolation abstraction to 'term' for environment abstraction")
+        println("Overriding template-based interpolation abstraction")
         println()
-        GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Term
+        GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Empty
       }
       val abstractedSystem = if (envAbstraction) smallSystem.environmentAbstract else smallSystem
 
