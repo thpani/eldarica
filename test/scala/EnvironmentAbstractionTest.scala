@@ -89,4 +89,7 @@ class EnvironmentAbstractionTest extends FunSuite {
   test("readflag.c") {
     checkIsSafe("readflag.c")
   }
+  test("semaphore.c") {
+    checkIsSafe("semaphore.c")
+  }
 }
