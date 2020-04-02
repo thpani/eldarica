@@ -8,9 +8,14 @@ import lazabs.horn.concurrency.CCReader
 import lazabs.nts.{NtsHorn, NtsWrapper}
 import lazabs.viewer.{HornPrinter, HornSMTPrinter}
 import org.scalatest.FunSuite
+import org.scalatest.concurrent.TimeLimitedTests
+import org.scalatest.time.SpanSugar._
 
-class EnvironmentAbstractionTest extends FunSuite {
+class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
+  def timeLimit = 40 seconds
+
   def check(filename: String) = {
+    printf("\n\n\n===== Test: %s =====\n\n\n", filename)
     GlobalParameters.parameters.value.envAbstraction = true
     GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Empty
     GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
