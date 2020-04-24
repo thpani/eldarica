@@ -73,6 +73,9 @@ class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
   test("13_unverif.c") {
     checkIsSafe("13_unverif.c")
   }
+  test("13_unverif_2.c") {
+    checkIsSafe("13_unverif_2.c")
+  }
   /* Benchmarks from
    * https://github.com/sosy-lab/sv-benchmarks/tree/master/c/pthread-lit
    */
