@@ -55,6 +55,9 @@ class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
   test("ppmm_threaded.c") {
     checkIsSafe("ppmm_threaded.c")
   }
+  test("ppmmpp.c") {
+    checkIsSafe("ppmmpp.c")
+  }
   test("mmpp.c") {
     checkIsSafe("ppmm.c")
   }
