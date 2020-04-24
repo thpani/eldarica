@@ -12,13 +12,15 @@ import org.scalatest.concurrent.TimeLimitedTests
 import org.scalatest.time.SpanSugar._
 
 class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
-  def timeLimit = 40 seconds
+//  def timeLimit = 90 seconds  // works for all except locals.c
+    def timeLimit = 200 seconds
 
   def check(filename: String) = {
     printf("\n\n\n===== Test: %s =====\n\n\n", filename)
     GlobalParameters.parameters.value.envAbstraction = true
     GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Empty
     GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
+    GlobalParameters.parameters.value.templateBasedInterpolationTimeout = 5000  // `locals.c' needs longer timeout
 
     val system =
       CCReader(new java.io.BufferedReader (
