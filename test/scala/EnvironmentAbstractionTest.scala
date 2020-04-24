@@ -17,6 +17,9 @@ class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
 
   def check(filename: String) = {
     printf("\n\n\n===== Test: %s =====\n\n\n", filename)
+    // Uncomment to output SMT horn clauses
+    // GlobalParameters.parameters.value.fileName = filename
+    // GlobalParameters.parameters.value.printIntermediateClauseSets = true
     GlobalParameters.parameters.value.envAbstraction = true
     GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Empty
     GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
