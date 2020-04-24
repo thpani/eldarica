@@ -47,7 +47,7 @@ class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
     checkIsSafe("pp.c")
   }
   test("mm.c") {
-    checkIsSafe("pp.c")
+    checkIsSafe("mm.c")
   }
   test("ppmm.c") {
     checkIsSafe("ppmm.c")
@@ -59,7 +59,7 @@ class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
     checkIsSafe("ppmmpp.c")
   }
   test("mmpp.c") {
-    checkIsSafe("ppmm.c")
+    checkIsSafe("mmpp.c")
   }
   test("stack.c") {
     checkIsSafe("stack.c")
