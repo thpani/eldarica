@@ -525,13 +525,13 @@ object ParametricEncoder {
             }
           }).flatten
           for (globalVarStride <- globalVarStrides ; locationStride <- locationStrides) {
-            val hint = VerifHintTplEqTerm((IIntLit(locationStride._2) * globalVarStride._1) - (IIntLit(globalVarStride._2) * locationStride._1), 4)
+            val hint = VerifHintTplEqTerm((IIntLit(locationStride._2) * globalVarStride._1) - (IIntLit(globalVarStride._2) * locationStride._1), 1)
             println("additional hint (strides): " + head.pred + " " + hint)
             additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
           }
         }
         for (i <- 0 to (globalVarNum-1)) {
-          val hint = VerifHintTplEqTerm(IVariable(i), 4)
+          val hint = VerifHintTplEqTerm(IVariable(i), 1)
           val head = process.head._1.head
           println("additional hint (global var): " + head.pred + " " + hint)
           additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
@@ -542,7 +542,7 @@ object ParametricEncoder {
         }
         val bodyClause = process.filter(_._1.bodyPredicates.size > 0).head._1
         val locVarSumVariables = locVarSum.map(constByNameIndex(_, bodyClause))
-        val hint = VerifHintTplEqTerm(locVarSumVariables.foldLeft(IIntLit(0).asInstanceOf[ITerm])((form, variable) => form +++ variable), 4)
+        val hint = VerifHintTplEqTerm(locVarSumVariables.foldLeft(IIntLit(0).asInstanceOf[ITerm])((form, variable) => form +++ variable), 1)
         val head = process.head._1.head
         println("additional hint (loc var sum): " + head.pred + " " + hint)
         additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
