@@ -533,7 +533,7 @@ object ParametricEncoder {
         for (i <- 0 to (globalVarNum-1)) {
           val hint = VerifHintTplEqTerm(IVariable(i), 4)
           val head = process.head._1.head
-          println("additional hint (parameter): " + head.pred + " " + hint)
+          println("additional hint (global var): " + head.pred + " " + hint)
           additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
         }
         def constByNameIndex(constant: IConstant, clause: Clause) : IVariable = {
