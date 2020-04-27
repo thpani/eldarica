@@ -621,7 +621,7 @@ class VerificationLoop(system : ParametricEncoder.System) {
               val oldInv = invariants(invIndex)
 
               val infProcesses = processes filter {
-                case (i, _) => system.processes(i)._2 == Infinite }
+                case (i, _) => system.processes(i)._2.isInstanceOf[Infinite] }
               assert(!infProcesses.isEmpty)
               val (chosenProcess, _) =
                 (for ((ind, ids) <- infProcesses groupBy (_._1);
