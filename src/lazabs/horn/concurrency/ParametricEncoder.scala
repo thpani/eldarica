@@ -519,8 +519,8 @@ object ParametricEncoder {
           }).flatten
           val locationStrides = (for ((arg, i) <- head.args.zipWithIndex if i >= globalVarNum) yield {
             arg match {
-              case IPlus(IConstant(_), IIntLit(t2)) => Some((IVariable(i), t2))
-//              case IPlus(IConstant(_), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
+              case IPlus(IConstant(c), IIntLit(t2)) if c.name.startsWith("loc_") => Some((IVariable(i), t2))
+//              case IPlus(IConstant(c), ITimes(t3, IIntLit(t2))) if c.name.startsWith("loc_") && t3.isMinusOne => Some((IVariable(i), -t2))
               case _ => None
             }
           }).flatten
