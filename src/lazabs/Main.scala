@@ -82,7 +82,7 @@ class GlobalParameters extends Cloneable {
   var printIntermediateClauseSets = false
   var horn = false
   var concurrentC = false
-  var envAbstraction = false
+  var tmca = false
   var global = false
   var disjunctive = false
   var splitClauses = false
@@ -165,7 +165,7 @@ class GlobalParameters extends Cloneable {
     that.printIntermediateClauseSets = this.printIntermediateClauseSets
     that.horn = this.horn
     that.concurrentC = this.concurrentC
-    that.envAbstraction = this.envAbstraction
+    that.tmca = this.tmca
     that.global = this.global
     that.disjunctive = this.disjunctive
     that.splitClauses = this.splitClauses
@@ -306,7 +306,7 @@ object Main {
 //      case "-upprg" :: rest => format = InputFormat.UppaalRG; arguments(rest)
 //      case "-upprel" :: rest => format = InputFormat.UppaalRelational; arguments(rest)
 //      case "-bip" :: rest =>  format = InputFormat.Bip; arguments(rest)
-      case "-envAbstract" :: rest => envAbstraction = true; arguments(rest)
+      case "-tmca" :: rest => tmca = true; arguments(rest)
 
       case "-abstract" :: rest => templateBasedInterpolation = true; arguments(rest)
       case "-abstractPO" :: rest => templateBasedInterpolationPortfolio = true; arguments(rest)
@@ -601,7 +601,7 @@ object Main {
         CCReader(new java.io.BufferedReader (
                    new java.io.FileReader(new java.io.File (fileName))),
                  funcName,
-                 arithmeticMode, envAbstraction)
+                 arithmeticMode, tmca)
 
       if (prettyPrint)
         lazabs.horn.concurrency.ReaderMain.printClauses(system)
@@ -614,17 +614,17 @@ object Main {
         lazabs.horn.concurrency.ReaderMain.printClauses(smallSystem)
       }
 
-      if (envAbstraction) {
+      if (tmca) {
         println()
-        println("Environment abstraction - overriding default argument values")
+        println("Thread-modular counter abstraction: overriding default argument values")
         println()
         GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Empty
         GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
         GlobalParameters.parameters.value.templateBasedInterpolationTimeout = 5000
       }
-      val abstractedSystem = if (envAbstraction) smallSystem.environmentAbstract else smallSystem
+      val abstractedSystem = if (tmca) smallSystem.environmentAbstract else smallSystem
 
-      if (prettyPrint && envAbstraction) {
+      if (prettyPrint && tmca) {
         println
         println("After environment abstraction:")
         lazabs.horn.concurrency.ReaderMain.printClauses(abstractedSystem)
@@ -694,6 +694,7 @@ object Main {
       printError("stack overflow", GlobalParameters.get.format)
     case t : Exception =>
       printError(t.getMessage, GlobalParameters.get.format)
+      t.printStackTrace()
   }
 
   private def printError(message : String,

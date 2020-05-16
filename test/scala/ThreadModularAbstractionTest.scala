@@ -11,7 +11,7 @@ import org.scalatest.FunSuite
 import org.scalatest.concurrent.TimeLimitedTests
 import org.scalatest.time.SpanSugar._
 
-class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
+class ThreadModularAbstractionTest extends FunSuite with TimeLimitedTests {
 //  def timeLimit = 90 seconds  // works for all except locals.c
     def timeLimit = 200 seconds
 
@@ -20,7 +20,7 @@ class EnvironmentAbstractionTest extends FunSuite with TimeLimitedTests {
     // Uncomment to output SMT horn clauses
     // GlobalParameters.parameters.value.fileName = filename
     // GlobalParameters.parameters.value.printIntermediateClauseSets = true
-    GlobalParameters.parameters.value.envAbstraction = true
+    GlobalParameters.parameters.value.tmca = true
     GlobalParameters.parameters.value.templateBasedInterpolationType = AbstractionType.Empty
     GlobalParameters.parameters.value.templateBasedInterpolationPrint = true
     GlobalParameters.parameters.value.templateBasedInterpolationTimeout = 5000  // `locals.c' needs longer timeout

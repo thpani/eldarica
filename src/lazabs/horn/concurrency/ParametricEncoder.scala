@@ -508,45 +508,47 @@ object ParametricEncoder {
           clause => clause.predicates subsetOf allPreds }
 
       val additionalHints = MHashMap[Predicate, Seq[VerifHintElement]]().withDefaultValue(Seq())
-      for ((process, locVarSum) <- envAbstractedProcessesAndLocVars) yield {
-        for ((Clause(head, _, _), _) <- process) yield {
-          val globalVarStrides = (for ((arg, i) <- head.args.zipWithIndex if i < globalVarNum) yield {
-            arg match {
-              case IPlus(IConstant(_), IIntLit(t2)) => Some((IVariable(i), t2))
-              case IPlus(IConstant(_), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
-              case _ => None
+        for ((process, locVarSum) <- envAbstractedProcessesAndLocVars) yield {
+          for ((Clause(head, _, _), _) <- process) yield {
+            val globalVarStrides = (for ((arg, i) <- head.args.zipWithIndex if i < globalVarNum) yield {
+              arg match {
+                case IPlus(IConstant(_), IIntLit(t2)) => Some((IVariable(i), t2))
+                case IPlus(IConstant(_), ITimes(t3, IIntLit(t2))) if t3.isMinusOne => Some((IVariable(i), -t2))
+                case _ => None
+              }
+            }).flatten
+            val locationStrides = (for ((arg, i) <- head.args.zipWithIndex if i >= globalVarNum) yield {
+              arg match {
+                case IPlus(IConstant(c), IIntLit(t2)) if c.name.startsWith("loc_") => Some((IVariable(i), t2))
+                //              case IPlus(IConstant(c), ITimes(t3, IIntLit(t2))) if c.name.startsWith("loc_") && t3.isMinusOne => Some((IVariable(i), -t2))
+                case _ => None
+              }
+            }).flatten
+            for (globalVarStride <- globalVarStrides; locationStride <- locationStrides) {
+              val hint = VerifHintTplEqTerm((IIntLit(locationStride._2) * globalVarStride._1) - (IIntLit(globalVarStride._2) * locationStride._1), 1)
+              println("additional hint (strides): " + head.pred + " " + hint)
+              additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
             }
-          }).flatten
-          val locationStrides = (for ((arg, i) <- head.args.zipWithIndex if i >= globalVarNum) yield {
-            arg match {
-              case IPlus(IConstant(c), IIntLit(t2)) if c.name.startsWith("loc_") => Some((IVariable(i), t2))
-//              case IPlus(IConstant(c), ITimes(t3, IIntLit(t2))) if c.name.startsWith("loc_") && t3.isMinusOne => Some((IVariable(i), -t2))
-              case _ => None
-            }
-          }).flatten
-          for (globalVarStride <- globalVarStrides ; locationStride <- locationStrides) {
-            val hint = VerifHintTplEqTerm((IIntLit(locationStride._2) * globalVarStride._1) - (IIntLit(globalVarStride._2) * locationStride._1), 1)
-            println("additional hint (strides): " + head.pred + " " + hint)
+          }
+          for (i <- 0 to (globalVarNum - 1)) {
+            val hint = VerifHintTplEqTerm(IVariable(i), 1)
+            val head = process.head._1.head
+            println("additional hint (global var): " + head.pred + " " + hint)
             additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
           }
-        }
-        for (i <- 0 to (globalVarNum-1)) {
-          val hint = VerifHintTplEqTerm(IVariable(i), 1)
+
+          def constByNameIndex(constant: IConstant, clause: Clause): IVariable = {
+            (for ((arg, i) <- clause.body.head.args.zipWithIndex
+                  if arg.isInstanceOf[IConstant] && arg.asInstanceOf[IConstant].c.name == constant.c.name) yield IVariable(i)).head
+          }
+
+          val bodyClause = process.filter(_._1.bodyPredicates.size > 0).head._1
+          val locVarSumVariables = locVarSum.map(constByNameIndex(_, bodyClause))
+          val hint = VerifHintTplEqTerm(locVarSumVariables.foldLeft(IIntLit(0).asInstanceOf[ITerm])((form, variable) => form +++ variable), 1)
           val head = process.head._1.head
-          println("additional hint (global var): " + head.pred + " " + hint)
+          println("additional hint (loc var sum): " + head.pred + " " + hint)
           additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
         }
-        def constByNameIndex(constant: IConstant, clause: Clause) : IVariable = {
-          (for ((arg, i) <- clause.body.head.args.zipWithIndex
-              if arg.isInstanceOf[IConstant] && arg.asInstanceOf[IConstant].c.name == constant.c.name) yield IVariable(i)).head
-        }
-        val bodyClause = process.filter(_._1.bodyPredicates.size > 0).head._1
-        val locVarSumVariables = locVarSum.map(constByNameIndex(_, bodyClause))
-        val hint = VerifHintTplEqTerm(locVarSumVariables.foldLeft(IIntLit(0).asInstanceOf[ITerm])((form, variable) => form +++ variable), 1)
-        val head = process.head._1.head
-        println("additional hint (loc var sum): " + head.pred + " " + hint)
-        additionalHints += (head.pred -> (additionalHints(head.pred) :+ hint))
-      }
 
       System(newProcesses,
         globalVarNum,

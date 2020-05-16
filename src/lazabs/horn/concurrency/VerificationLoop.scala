@@ -166,7 +166,7 @@ class VerificationLoop(system : ParametricEncoder.System) {
   val result = {
     val processNum = system.processes.size
     var invariants : Seq[Seq[Int]] =
-      if (GlobalParameters.get.envAbstraction) {
+      if (GlobalParameters.get.tmca) {
         List((List tabulate processNum) {_ => 1})
       } else {
       for (i <- 0 until processNum)

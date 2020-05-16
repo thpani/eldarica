@@ -49,7 +49,7 @@ object CCReader {
 
   def apply(input : java.io.Reader, entryFunction : String,
             arithMode : ArithmeticMode.Value = ArithmeticMode.Mathematical,
-            envAbstraction : Boolean = false) : ParametricEncoder.System = {
+            tmca : Boolean = false) : ParametricEncoder.System = {
     def entry(parser : concurrentC.parser) = parser.pProgram
     val prog = parseWithEntry(input, entry _)
 //    println(printer print prog)
@@ -58,7 +58,7 @@ object CCReader {
     var reader : CCReader = null
     while (reader == null)
       try {
-        reader = new CCReader(prog, entryFunction, useTime, arithMode, envAbstraction)
+        reader = new CCReader(prog, entryFunction, useTime, arithMode, tmca)
       } catch {
         case NeedsTimeException => {
           warn("enabling time")
@@ -188,7 +188,7 @@ class CCReader private (prog : Program,
                         entryFunction : String,
                         useTime : Boolean,
                         arithmeticMode : CCReader.ArithmeticMode.Value,
-                        envAbstraction : Boolean) {
+                        tmca : Boolean) {
 
   import CCReader._
 
@@ -574,7 +574,7 @@ class CCReader private (prog : Program,
         case decl: Athread =>
           decl.thread_def_ match {
             case thread: ParaThread => {
-              if (envAbstraction) {
+              if (tmca) {
                 if (globalVars.count(_.name == thread.cident_1) == 0) {
                   val c = CCInt newConstant thread.cident_1
                   globalVars += c
@@ -603,7 +603,7 @@ class CCReader private (prog : Program,
             case thread : ParaThread => {
               setPrefix(thread.cident_2)
               pushLocalFrame
-              if (!envAbstraction) {
+              if (!tmca) {
                 addLocalVar(CCInt newConstant thread.cident_1, CCInt)
               }
               val translator = FunctionTranslator.apply
