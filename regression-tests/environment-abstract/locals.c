@@ -1,3 +1,10 @@
+/*
+ * Zeinab Ganjei, Ahmed Rezine, Petru Eles, Zebo Peng: Abstracting and Counting
+ * Synchronizing Processes. VMCAI 2015: 227-244
+ *
+ * https://gitlab.ida.liu.se/apv/pacman/-/tree/master/examples
+ */
+
 int wait=0;
 int sval;
 

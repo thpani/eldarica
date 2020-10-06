@@ -5,13 +5,20 @@
  * https://gitlab.ida.liu.se/apv/pacman/-/tree/master/examples
  */
 
+int max;
+int arbitrary;
 int waiting = 0;
-int read = 0;
 
 thread[N] thr {
-    read = 1;
-    read = 0;
+    int val;
+    arbitrary = val;
+    atomic {
+        if (max < val) {
+            max = val;
+        }
+    }
     atomic { waiting++; }
     assume(waiting == N);
-    assert(!read);
+
+    assert(arbitrary <= max);
 }

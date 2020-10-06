@@ -1,5 +1,5 @@
 ; To get this, run:
-;   ./eld -log -pHints regression-tests/environment-abstract/cyclic.c -pIntermediate -envAbstract
+;   ./eld -log -pHints regression-tests/environment-abstract/cyclic.c -pIntermediate -tmca
 ; To verify this, run:
 ;   ./eld regression-tests/environment-abstract/cyclic.c-1_1_1.smt2 -log -sol -cex
 (set-logic HORN)

@@ -1,3 +1,11 @@
+/*
+ * Alejandro Sánchez, Sriram Sankaranarayanan, César Sánchez, Bor-Yuh Evan
+ * Chang: Invariant Generation for Parametrized Systems Using Self-reflection.
+ * SAS 2012: 146-163
+ *
+ * https://github.com/sosy-lab/sv-benchmarks/blob/master/c/pthread-lit/sssc12.c
+ */
+
 int len = _;
 int next = 0;
 

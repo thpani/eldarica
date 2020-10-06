@@ -1,3 +1,9 @@
+/*
+ * Shaz Qadeer, Dinghao Wu: KISS: keep it simple and sequential. PLDI 2004.
+ *
+ * https://github.com/sosy-lab/sv-benchmarks/blob/master/c/pthread-lit/qw2004_variant.c
+ */
+
 int pendingIo = 1;
 int stoppingFlag = 0;
 int stoppingEvent = 0;
